@@ -1,0 +1,121 @@
+{
+  "butter": {
+    "vegan": ["coconut oil", "vegan butter", "margarine", "olive oil"],
+    "dairy-free": ["coconut oil", "margarine", "olive oil", "avocado oil"],
+    "general": ["ghee", "shortening"]
+  },
+  "milk": {
+    "vegan": ["almond milk", "oat milk", "soy milk", "coconut milk"],
+    "dairy-free": ["almond milk", "oat milk", "soy milk", "coconut milk"],
+    "general": ["buttermilk", "cream"]
+  },
+  "eggs": {
+    "vegan": ["flax egg (1 tbsp flax + 3 tbsp water)", "chia egg", "applesauce (1/4 cup per egg)", "mashed banana"],
+    "general": ["egg whites", "egg substitute"]
+  },
+  "cream": {
+    "vegan": ["coconut cream", "cashew cream", "oat cream"],
+    "dairy-free": ["coconut cream", "cashew cream", "oat cream"],
+    "low-fat": ["evaporated skim milk", "greek yogurt"]
+  },
+  "cheese": {
+    "vegan": ["nutritional yeast", "cashew cheese", "vegan cheese"],
+    "dairy-free": ["vegan cheese", "nutritional yeast"],
+    "low-fat": ["reduced-fat cheese", "part-skim mozzarella"]
+  },
+  "parmesan": {
+    "vegan": ["vegan parmesan", "nutritional yeast"],
+    "dairy-free": ["vegan parmesan", "nutritional yeast"]
+  },
+  "sour cream": {
+    "vegan": ["coconut yogurt", "cashew cream", "vegan sour cream"],
+    "dairy-free": ["coconut yogurt", "vegan sour cream"],
+    "low-fat": ["greek yogurt", "low-fat sour cream"]
+  },
+  "flour": {
+    "gluten-free": ["almond flour", "rice flour", "coconut flour", "gluten-free flour blend"],
+    "low-carb": ["almond flour", "coconut flour"]
+  },
+  "pasta": {
+    "gluten-free": ["rice pasta", "quinoa pasta", "chickpea pasta", "zucchini noodles", "gluten-free pasta"],
+    "low-carb": ["zucchini noodles", "shirataki noodles", "spaghetti squash"]
+  },
+  "spaghetti": {
+    "gluten-free": ["rice spaghetti", "quinoa spaghetti", "chickpea spaghetti", "zucchini noodles"],
+    "low-carb": ["zucchini noodles", "shirataki noodles", "spaghetti squash"]
+  },
+  "fettuccine": {
+    "gluten-free": ["rice fettuccine", "quinoa fettuccine", "chickpea fettuccine", "gluten-free fettuccine"],
+    "low-carb": ["zucchini ribbons", "shirataki fettuccine"]
+  },
+  "penne": {
+    "gluten-free": ["rice penne", "quinoa penne", "chickpea penne", "gluten-free penne"],
+    "low-carb": ["zucchini tubes", "shirataki penne"]
+  },
+  "linguine": {
+    "gluten-free": ["rice linguine", "quinoa linguine", "chickpea linguine", "gluten-free linguine"],
+    "low-carb": ["zucchini noodles", "shirataki linguine"]
+  },
+  "macaroni": {
+    "gluten-free": ["rice macaroni", "quinoa macaroni", "chickpea macaroni", "gluten-free macaroni"],
+    "low-carb": ["cauliflower macaroni"]
+  },
+  "noodles": {
+    "gluten-free": ["rice noodles", "glass noodles", "gluten-free noodles"],
+    "low-carb": ["shirataki noodles", "zucchini noodles"]
+  },
+  "bread": {
+    "gluten-free": ["gluten-free bread", "almond flour bread", "coconut flour bread"],
+    "low-carb": ["cloud bread", "almond flour bread"]
+  },
+  "breadcrumbs": {
+    "gluten-free": ["gluten-free breadcrumbs", "almond meal", "crushed rice crackers"],
+    "low-carb": ["almond meal", "pork rinds (crushed)"]
+  },
+  "tortilla": {
+    "gluten-free": ["corn tortillas", "almond flour tortillas", "coconut flour tortillas"],
+    "low-carb": ["almond flour tortillas", "lettuce wraps"]
+  },
+  "sugar": {
+    "low-sugar": ["stevia", "monk fruit sweetener", "erythritol"],
+    "general": ["honey", "maple syrup", "agave nectar"]
+  },
+  "mayonnaise": {
+    "vegan": ["vegan mayo", "avocado", "hummus"],
+    "low-fat": ["greek yogurt", "low-fat mayo"]
+  },
+  "yogurt": {
+    "vegan": ["coconut yogurt", "almond yogurt", "soy yogurt"],
+    "dairy-free": ["coconut yogurt", "almond yogurt", "soy yogurt"]
+  },
+  "chocolate": {
+    "vegan": ["dairy-free chocolate", "cocoa powder + coconut oil"],
+    "sugar-free": ["sugar-free chocolate", "cacao nibs"]
+  },
+  "beef": {
+    "vegetarian": ["impossible burger", "beyond meat", "plant-based ground beef", "lentils", "mushrooms"]
+  },
+  "chicken": {
+    "vegetarian": ["tofu", "tempeh", "seitan", "plant-based chicken"]
+  },
+  "bacon": {
+    "vegetarian": ["tempeh bacon", "coconut bacon", "mushroom bacon"],
+    "turkey-based": ["turkey bacon"]
+  },
+  "gelatin": {
+    "vegan": ["agar-agar", "pectin", "carrageenan"]
+  },
+  "heavy cream": {
+    "vegan": ["coconut cream", "cashew cream"],
+    "dairy-free": ["coconut cream", "cashew cream"],
+    "low-fat": ["evaporated skim milk"]
+  },
+  "ricotta": {
+    "vegan": ["tofu ricotta", "cashew ricotta"],
+    "dairy-free": ["tofu ricotta", "cashew ricotta"]
+  },
+  "mozzarella": {
+    "vegan": ["vegan mozzarella", "cashew cheese"],
+    "dairy-free": ["vegan mozzarella"]
+  }
+}

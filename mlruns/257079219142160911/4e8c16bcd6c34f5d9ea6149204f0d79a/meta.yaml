@@ -1,0 +1,14 @@
+artifact_uri: file:///home/martin/Documents/CEIA/CEIA-vpc3/mlruns/257079219142160911/4e8c16bcd6c34f5d9ea6149204f0d79a/artifacts
+end_time: 1763613486011
+entry_point_name: ''
+experiment_id: '257079219142160911'
+lifecycle_stage: active
+run_id: 4e8c16bcd6c34f5d9ea6149204f0d79a
+run_name: embeddings_all-MiniLM-L6-v2
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1763613486005
+status: 3
+tags: []
+user_id: martin

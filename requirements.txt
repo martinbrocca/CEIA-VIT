@@ -1,0 +1,15 @@
+pandas
+numpy
+scikit-learn
+# PyTorch - will auto-detect system
+torch>=2.0.0
+torchvision>=0.15.0
+transformers
+sentence-transformers
+faiss-cpu  # Works on all platforms
+streamlit
+pyyaml
+kaggle
+mlflow
+pillow
+tqdm

@@ -1,0 +1,14 @@
+artifact_uri: file:///home/martin/Documents/CEIA/CEIA-vpc3/mlruns/257079219142160911/7aa2e9d075044522b466d1f7c1e494df/artifacts
+end_time: 1763613027023
+entry_point_name: ''
+experiment_id: '257079219142160911'
+lifecycle_stage: active
+run_id: 7aa2e9d075044522b466d1f7c1e494df
+run_name: data_preprocessing
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1763613027019
+status: 3
+tags: []
+user_id: martin

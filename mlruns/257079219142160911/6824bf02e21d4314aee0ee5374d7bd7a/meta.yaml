@@ -1,0 +1,14 @@
+artifact_uri: file:///home/martin/Documents/CEIA/CEIA-vpc3/mlruns/257079219142160911/6824bf02e21d4314aee0ee5374d7bd7a/artifacts
+end_time: 1763613823507
+entry_point_name: ''
+experiment_id: '257079219142160911'
+lifecycle_stage: active
+run_id: 6824bf02e21d4314aee0ee5374d7bd7a
+run_name: embeddings_clip-vit-base-patch32
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1763613823502
+status: 3
+tags: []
+user_id: martin
