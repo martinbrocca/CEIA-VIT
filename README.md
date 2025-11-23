@@ -15,7 +15,7 @@ Sistema de búsqueda de recetas que combina procesamiento de lenguaje natural y 
 ```mermaid
 flowchart TB
     subgraph DATOS[" Preparación de Datos"]
-        A[("Food.com Dataset 231K recetas")] --> B["• Preprocesamiento y limpieza<br> • Parsing de ingredientes<br> • Generación de texto"]
+        A[("Food.com Dataset 231K recetas")] --> B[""<div style='text-align:left;'>• Preprocesamiento y limpieza<br> • Parsing de ingredientes<br> • Generación de texto</div>"]
         B --> C[("recipes.parquet\nDatos procesados")]
     end
 
