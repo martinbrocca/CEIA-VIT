@@ -20,7 +20,7 @@ flowchart TB
     end
 
     subgraph EMBEDDINGS[" Generación de embeddings"]
-        C --> D["Sentence-Transformers\n(MiniLM-L6)<br>384 dim"]
+        C --> D["Sentence-Transformers<br>(MiniLM-L6)<br>384 dim"]
         C --> E["CLIP Text Encoder<br>(ViT-B/32)<br>512 dim"]
         D --> F[("recipe_embeddings.npy")]
         E --> G[("clip_embeddings.npy")]
