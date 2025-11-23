@@ -43,7 +43,7 @@ flowchart TB
 
     subgraph POSTPROCESS[" Post-procesamiento"]
         O --> P["Filtros dietéticos"]
-        P --> Q["Motor de dustituciones"]
+        P --> Q["Motor de sustituciones"]
         Q --> R["Resultados finales"]
     end
 
