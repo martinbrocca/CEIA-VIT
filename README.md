@@ -16,19 +16,19 @@ Sistema de búsqueda de recetas que combina procesamiento de lenguaje natural y 
 flowchart TB
     subgraph DATOS[" Preparación de Datos"]
         A[("Food.com Dataset 231K recetas")] --> B["<div style='text-align:left;'>• Preprocesamiento<br>• Limpieza<br>• Parsing de ingredientes<br>• Generación de texto</div>"]
-        B --> C[("recipes.parquet\nDatos procesados")]
+        B --> C[("recipes.parquet<br>Datos procesados")]
     end
 
     subgraph EMBEDDINGS[" Generación de embeddings"]
-        C --> D["Sentence-Transformers\n(MiniLM-L6)\n384 dim"]
-        C --> E["CLIP Text Encoder\n(ViT-B/32)\n512 dim"]
+        C --> D["Sentence-Transformers\n(MiniLM-L6)<br>384 dim"]
+        C --> E["CLIP Text Encoder<br>(ViT-B/32)<br>512 dim"]
         D --> F[("recipe_embeddings.npy")]
         E --> G[("clip_embeddings.npy")]
     end
 
     subgraph INDEX[" Indexación"]
-        F --> H["FAISS Index\n(IndexFlatIP)"]
-        G --> I["FAISS Index\n(IndexFlatIP)"]
+        F --> H["FAISS Index<br>(IndexFlatIP)"]
+        G --> I["FAISS Index<br>(IndexFlatIP)"]
     end
 
     subgraph INFERENCE[" Inferencia"]
