@@ -3,21 +3,47 @@ import mlflow
 import time
 from pathlib import Path
 import sys
+import os
+from dotenv import load_dotenv
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from utils.config import PROJECT_ROOT
 
-# Set MLflow tracking URI
-MLFLOW_TRACKING_URI = PROJECT_ROOT / "mlruns"
-mlflow.set_tracking_uri(f"file://{MLFLOW_TRACKING_URI}")
+# Load environment variables
+load_dotenv(PROJECT_ROOT / ".env")
+
+# Set MLflow tracking to Databricks
+DATABRICKS_HOST = os.getenv("DATABRICKS_HOST")
+DATABRICKS_TOKEN = os.getenv("DATABRICKS_TOKEN")
+
+if DATABRICKS_HOST and DATABRICKS_TOKEN:
+    mlflow.set_tracking_uri("databricks")
+    os.environ["DATABRICKS_HOST"] = DATABRICKS_HOST
+    os.environ["DATABRICKS_TOKEN"] = DATABRICKS_TOKEN
+    print(f"✓ Using Databricks MLflow at {DATABRICKS_HOST}")
+else:
+    # Fallback to local
+    MLFLOW_TRACKING_URI = PROJECT_ROOT / "mlruns"
+    mlflow.set_tracking_uri(f"file://{MLFLOW_TRACKING_URI}")
+    print(f"⚠ Using local MLflow at {MLFLOW_TRACKING_URI}")
 
 class MLflowLogger:
     """Helper class for MLflow experiment tracking"""
     
     def __init__(self, experiment_name: str):
         self.experiment_name = experiment_name
-        mlflow.set_experiment(experiment_name)
+        
+        # For Databricks, experiments need the /Users/email@domain.com/ prefix
+        if DATABRICKS_HOST:
+            # Get or create experiment in Databricks workspace
+            try:
+                mlflow.set_experiment(f"/Users/{os.getenv('DATABRICKS_USER', 'default')}/{experiment_name}")
+            except:
+                # Fallback to root level experiment
+                mlflow.set_experiment(f"/{experiment_name}")
+        else:
+            mlflow.set_experiment(experiment_name)
     
     def log_preprocessing(self, stats: dict):
         """Log data preprocessing metrics"""

@@ -4,6 +4,10 @@ from pathlib import Path
 # Project root directory
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
+if not (PROJECT_ROOT / "data" / "raw" / "food-com").exists():
+    print(f"Warning: Expected data directory not found at {PROJECT_ROOT}")
+
+    
 # Data directories
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"

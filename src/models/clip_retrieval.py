@@ -128,6 +128,69 @@ class CLIPRecipeRetriever:
         return results.head(top_k)
 
 
+    def search(
+        self, 
+        query: str,
+        top_k: int = 10,
+        dietary_filters: Optional[List[str]] = None
+    ) -> pd.DataFrame:
+        """
+        Search for recipes by text query using CLIP text encoder
+        
+        Args:
+            query: Text query
+            top_k: Number of results to return
+            dietary_filters: List of dietary requirements
+        
+        Returns:
+            DataFrame with top matching recipes
+        """
+        with torch.no_grad():
+            # Process text query
+            inputs = self.processor(
+                text=[query],
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=77
+            ).to(self.device)
+            
+            # Get text embeddings
+            text_embeddings = self.model.get_text_features(**inputs)
+            
+            # Normalize for cosine similarity
+            text_embeddings = text_embeddings / text_embeddings.norm(dim=-1, keepdim=True)
+            text_embeddings = text_embeddings.cpu().numpy()
+        
+        # Search - get more results if filtering
+        search_k = top_k * 10 if dietary_filters else top_k
+        distances, indices = self.index.search(text_embeddings.astype('float32'), search_k)
+        
+        # Get recipe IDs
+        result_recipe_ids = self.recipe_ids[indices[0]]
+        
+        # Get recipes
+        results = self.recipes_df[self.recipes_df['id'].isin(result_recipe_ids)].copy()
+        
+        # Add similarity scores
+        id_to_score = dict(zip(result_recipe_ids, distances[0]))
+        results['similarity_score'] = results['id'].map(id_to_score)
+        results = results.sort_values('similarity_score', ascending=False)
+        
+        # Apply dietary filters if specified
+        if dietary_filters:
+            for diet_filter in dietary_filters:
+                diet_filter_lower = diet_filter.lower()
+                results = results[
+                    results['tags_parsed'].apply(
+                        lambda tags: any(diet_filter_lower in tag.lower() for tag in tags)
+                    )
+                ]
+        
+        # Return top_k after filtering
+        return results.head(top_k)
+
+
 def test_clip_retrieval():
     """Test CLIP image retrieval - requires a test image"""
     retriever = CLIPRecipeRetriever()

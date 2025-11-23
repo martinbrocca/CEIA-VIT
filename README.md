@@ -1,4 +1,4 @@
-# Motor de Búsqueda Multimodal de Recetas
+# 🍳 Motor de Búsqueda Multimodal de Recetas
 
 Sistema de búsqueda de recetas que combina procesamiento de lenguaje natural y visión por computadora para encontrar recetas por texto, ingredientes o imágenes, con filtros dietéticos inteligentes y sustituciones de ingredientes.
 
@@ -11,7 +11,77 @@ Sistema de búsqueda de recetas que combina procesamiento de lenguaje natural y 
 -  **Retrieval Rápido**: Búsqueda en milisegundos usando índices FAISS
 -  **Tracking MLOps**: Experimentos registrados en MLflow/Databricks
 
-##  Arquitectura del Proyecto
+##  Arquitectura del Sistema
+```mermaid
+flowchart TB
+    subgraph DATOS[" Preparación de Datos"]
+        A[("Food.com Dataset\n231K recetas")] --> B["Preprocesamiento\n• Limpieza\n• Parsing ingredientes\n• Generación texto"]
+        B --> C[("recipes.parquet\nDatos procesados")]
+    end
+
+    subgraph EMBEDDINGS[" Generación de Embeddings"]
+        C --> D["Sentence-Transformers\n(MiniLM-L6)\n384 dim"]
+        C --> E["CLIP Text Encoder\n(ViT-B/32)\n512 dim"]
+        D --> F[("recipe_embeddings.npy")]
+        E --> G[("clip_embeddings.npy")]
+    end
+
+    subgraph INDEX[" Indexación"]
+        F --> H["FAISS Index\n(IndexFlatIP)"]
+        G --> I["FAISS Index\n(IndexFlatIP)"]
+    end
+
+    subgraph INFERENCE[" Inferencia"]
+        J["Query de Texto"] --> K["Text Encoder"]
+        L["Imagen de Plato"] --> M["CLIP Image Encoder"]
+        K --> N["Búsqueda Similaridad"]
+        M --> N
+        H --> N
+        I --> N
+        N --> O["Top-K Resultados"]
+    end
+
+    subgraph POSTPROCESS[" Post-procesamiento"]
+        O --> P["Filtros Dietéticos"]
+        P --> Q["Motor de Sustituciones"]
+        Q --> R["Resultados Finales"]
+    end
+
+    subgraph UI[" Interfaz"]
+        R --> S["Streamlit App"]
+        S --> T["Usuario"]
+    end
+
+    style DATOS fill:#e1f5fe
+    style EMBEDDINGS fill:#fff3e0
+    style INDEX fill:#f3e5f5
+    style INFERENCE fill:#e8f5e9
+    style POSTPROCESS fill:#fce4ec
+    style UI fill:#f5f5f5
+```
+
+## Pipeline de Procesamiento
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant App as Streamlit
+    participant R as Retriever
+    participant F as FAISS
+    participant S as Sustituciones
+    
+    U->>App: Búsqueda (texto/imagen)
+    App->>R: Encode query
+    R->>R: Generar embedding
+    R->>F: Buscar top-K similares
+    F-->>R: Índices + scores
+    R->>R: Aplicar filtros dietéticos
+    R-->>App: Recetas filtradas
+    App->>S: Obtener sustituciones
+    S-->>App: Alternativas de ingredientes
+    App-->>U: Mostrar resultados
+```
+
+##  Estructura del Proyecto
 ```
 CEIA-VIT/
 ├── app/                              # Interfaz Streamlit
@@ -37,17 +107,23 @@ CEIA-VIT/
 │   │
 │   ├── evaluation/                  # Scripts de evaluación
 │   │   ├── hard_negatives.py        # Tests de negativos difíciles
-│   │   └── clip_image_tests.py      # Tests de pares confusos
+│   │   ├── clip_image_tests.py      # Tests de pares confusos
+│   │   ├── model_comparison.py      # Comparación MiniLM vs CLIP
+│   │   └── vision_model_comparison.py # Comparación modelos de visión
 │   │
 │   └── utils/                       # Utilidades
 │       ├── config.py                # Configuración de rutas
 │       ├── device.py                # Manejo de GPU/CPU/MPS
-│       └── mlflow_logger.py         # Logging a MLflow
+│       └── mlflow_logger.py         # Logging a MLflow/Databricks
 │
 ├── data/                            # Datos (gitignored)
 │   ├── raw/food-com/               # Dataset original Food.com
 │   ├── processed/                   # Recetas preprocesadas
 │   └── embeddings/                  # Embeddings y índices FAISS
+│
+├── experiments/                     # Resultados de experimentos
+│   ├── comparison_charts/           # Gráficos comparación de modelos
+│   └── vision_comparison/           # Gráficos comparación visión
 │
 ├── notebooks/                       # Jupyter notebooks para exploración
 ├── configs/                         # Archivos de configuración
@@ -137,43 +213,88 @@ La app se abrirá en `http://localhost:8501` con tres modos de búsqueda:
 2. ** Búsqueda por Texto**: Describe lo que buscas
 3. ** Búsqueda por Ingredientes**: Lista ingredientes disponibles
 
-### Evaluación del Sistema
-
-**Tests de Negativos Difíciles:**
-```bash
-# Evaluar Sentence-Transformers
-python src/evaluation/hard_negatives.py
-
-# Evaluar CLIP
-python src/evaluation/hard_negatives.py --clip
-```
-
-**Tests de Pares Confusos (tipo acelga/espinaca):**
-```bash
-python src/evaluation/clip_image_tests.py
-```
-
 ##  Resultados de Evaluación
 
+### Comparación de Modelos de Texto vs Multimodal
+
+| Métrica | MiniLM-L6 | CLIP-ViT-B32 | Ganador |
+|---------|-----------|--------------|---------|
+| **Accuracy@1** | 0.850 | 0.850 | Empate |
+| **Accuracy@5** | 0.750 | **0.900** | CLIP |
+| **Accuracy@10** | 0.850 | 0.850 | Empate |
+| **Ingredient Match@5** | 0.800 | **0.850** | CLIP |
+| **Name Relevance@5** | **0.883** | 0.738 | MiniLM |
+| **Avg Similarity@5** | 0.720 | **0.844** | CLIP |
+| **Latencia** | 17.3ms | **14.6ms** | CLIP |
+
+### Comparación de Modelos de Visión
+
+| Modelo | Dimensión | Accuracy@5 | Velocidad (recetas/s) | Latencia |
+|--------|-----------|------------|----------------------|----------|
+| **CLIP-ViT-B/32** | 512 | **100%** | **5055** | 4.2ms |
+| **CLIP-ViT-L/14** | 768 | 94% | 2470 | 5.4ms |
+
+### Hallazgos Clave
+
+1. **CLIP gana en general**: Mejor accuracy@5, matching de ingredientes, scores de confianza más altos, Y más rápido
+2. **MiniLM mejor en relevancia de nombres**: Mejor para hacer coincidir palabras de la query directamente con nombres de recetas
+3. **CLIP-ViT-B/32 vs L/14**: El modelo más pequeño (B/32) sorprendentemente supera al más grande en este dominio
+4. **Ambos son rápidos**: Búsqueda sub-20ms sobre 231K recetas
+
+### Tests de Negativos Difíciles
+```
+Test: Chocolate cake should return cakes, not cookies     ✓ PASS
+Test: Carbonara should not return other Italian dishes    ✓ PASS  
+Test: Vegetarian burger should have no meat               ✓ PASS
+Test: Gluten-free bread should not have regular flour     ✗ FAIL*
+Test: Vegan dessert should have no animal products        ✗ FAIL*
+
+Pass Rate: 60% (3/5)
+```
+*Los fallos se deben a tags dietéticos inconsistentes en el dataset, no al modelo.
+
+##  Ejecutar Evaluaciones
+```bash
+# Tests de negativos difíciles
+python src/evaluation/hard_negatives.py
+python src/evaluation/hard_negatives.py --clip
+
+# Comparación MiniLM vs CLIP
+python src/evaluation/model_comparison.py
+
+# Comparación de modelos de visión (CLIP variantes)
+python src/evaluation/vision_model_comparison.py --max-recipes 50000
+```
+
+##  Visualizaciones Generadas
+
+El sistema genera automáticamente las siguientes visualizaciones:
+
 ### Comparación de Modelos
+- `accuracy_at_k_comparison.png` - Gráfico de barras Accuracy@K
+- `ingredient_match_comparison.png` - Coincidencia de ingredientes
+- `similarity_distribution.png` - Distribución de scores de similaridad
+- `search_time_comparison.png` - Boxplot de latencia
+- `radar_comparison.png` - Gráfico radar multidimensional
+- `summary_table.png` - Tabla resumen
 
-| Métrica | Sentence-Transformers | CLIP |
-|---------|----------------------|------|
-| **Pass Rate** | 60% (3/5) | 60% (3/5) |
-| **Precisión Objetivo** | 80% | 72% |
-| **Similitud Promedio** | 0.687 | 0.826 |
-| **Tiempo Búsqueda** | 36.2ms | 38.9ms |
-
-**Conclusión**: CLIP muestra mayor confianza en las coincidencias (similitud +20%), ideal para búsqueda por imagen, con overhead mínimo de latencia.
+### Comparación de Visión
+- `vision_accuracy_at_k.png` - Accuracy por modelo de visión
+- `vision_embedding_speed.png` - Velocidad de embedding
+- `vision_model_characteristics.png` - Características de modelos
+- `vision_summary_table.png` - Tabla resumen de visión
 
 ##  Stack Tecnológico
 
-- **Embeddings**: Sentence-Transformers, CLIP (HuggingFace)
-- **Búsqueda**: FAISS (Facebook AI Similarity Search)
-- **UI**: Streamlit
-- **MLOps**: MLflow + Databricks
-- **Procesamiento**: pandas, NumPy
-- **DL**: PyTorch (con soporte CUDA/MPS/CPU)
+| Categoría | Tecnología |
+|-----------|------------|
+| **Embeddings de Texto** | Sentence-Transformers (MiniLM-L6-v2) |
+| **Embeddings Multimodales** | CLIP (ViT-B/32, ViT-L/14) |
+| **Búsqueda Vectorial** | FAISS (Facebook AI Similarity Search) |
+| **Interfaz Web** | Streamlit |
+| **MLOps** | MLflow + Databricks |
+| **Procesamiento de Datos** | pandas, NumPy |
+| **Deep Learning** | PyTorch (con soporte CUDA/MPS/CPU) |
 
 ##  MLflow/Databricks
 
@@ -181,6 +302,7 @@ El pipeline registra automáticamente:
 - Estadísticas de preprocesamiento
 - Métricas de embeddings (tiempo, dimensión, throughput)
 - Resultados de evaluación (precision, recall, contamination rate)
+- Artefactos (gráficos de comparación)
 
 Ver experimentos localmente:
 ```bash
@@ -212,7 +334,7 @@ O en Databricks (si está configurado):
 - Ingredientes, pasos, tags, metadatos nutricionales
 - [Descargar aquí](https://www.kaggle.com/datasets/shuyangli94/food-com-recipes-and-user-interactions)
 
-## 🎓 Contexto Académico
+##  Contexto Académico
 
 Proyecto desarrollado para **CEIA (Especialización en Inteligencia Artificial)** - Universidad de Buenos Aires
 
@@ -220,12 +342,16 @@ Proyecto desarrollado para **CEIA (Especialización en Inteligencia Artificial)*
 
 **Objetivo**: Demostrar capacidades de búsqueda multimodal combinando NLP y CV con MLOps
 
+##  Grupo 1
 
+- Martín Brocca
+- Ariadna Garmendia
+- Carina Roldan
 
-## 📄 Licencia
+##  Licencia
 
 Este proyecto es con fines educativos.
 
 ---
 
-**💡 Tip**: Para profesores evaluando este proyecto - todos los comandos funcionan sin configuración adicional excepto las credenciales de Databricks (opcional). El sistema usa embeddings pre-calculados y puede ejecutarse completamente en modo local.
+** Tip para evaluadores**: Todos los comandos funcionan sin configuración adicional excepto las credenciales de Databricks (opcional). El sistema usa embeddings pre-calculados y puede ejecutarse completamente en modo local.
