@@ -1,25 +1,25 @@
-# 🍳 Motor de Búsqueda Multimodal de Recetas
+# 🍳 Motor de búsqueda multimodal de recetas
 
 Sistema de búsqueda de recetas que combina procesamiento de lenguaje natural y visión por computadora para encontrar recetas por texto, ingredientes o imágenes, con filtros dietéticos inteligentes y sustituciones de ingredientes.
 
 ##  Características
 
--  **Búsqueda Semántica**: Búsqueda sobre 231K recetas usando embeddings de texto
--  **Búsqueda por Imagen**: Sube fotos de platos para encontrar recetas similares usando CLIP
--  **Filtros Dietéticos**: Vegetariano, vegano, sin gluten, sin lácteos
--  **Sustituciones Inteligentes**: Sugerencias de ingredientes alternativos según preferencias dietéticas
--  **Retrieval Rápido**: Búsqueda en milisegundos usando índices FAISS
+-  **Búsqueda semántica**: Búsqueda sobre 231K recetas usando embeddings de texto
+-  **Búsqueda por imagen**: Sube fotos de platos para encontrar recetas similares usando CLIP
+-  **Filtros dietéticos**: Vegetariano, vegano, sin gluten, sin lácteos
+-  **Sustituciones inteligentes**: Sugerencias de ingredientes alternativos según preferencias dietéticas
+-  **Retrieval rápido**: Búsqueda en milisegundos usando índices FAISS
 -  **Tracking MLOps**: Experimentos registrados en MLflow/Databricks
 
-##  Arquitectura del Sistema
+##  Arquitectura del sistema
 ```mermaid
 flowchart TB
     subgraph DATOS[" Preparación de Datos"]
-        A[("Food.com Dataset 231K recetas")] --> B["Preprocesamiento Limpieza\n• Parsing ingredientes\n• Generación texto"]
+        A[("Food.com Dataset 231K recetas")] --> B["Preprocesamiento Limpieza• \nParsing ingredientes• \nGeneración texto"]
         B --> C[("recipes.parquet\nDatos procesados")]
     end
 
-    subgraph EMBEDDINGS[" Generación de Embeddings"]
+    subgraph EMBEDDINGS[" Generación de embeddings"]
         C --> D["Sentence-Transformers\n(MiniLM-L6)\n384 dim"]
         C --> E["CLIP Text Encoder\n(ViT-B/32)\n512 dim"]
         D --> F[("recipe_embeddings.npy")]
@@ -34,17 +34,17 @@ flowchart TB
     subgraph INFERENCE[" Inferencia"]
         J["Query de Texto"] --> K["Text Encoder"]
         L["Imagen de Plato"] --> M["CLIP Image Encoder"]
-        K --> N["Búsqueda Similaridad"]
+        K --> N["Búsqueda similaridad"]
         M --> N
         H --> N
         I --> N
-        N --> O["Top-K Resultados"]
+        N --> O["Top-K resultados"]
     end
 
     subgraph POSTPROCESS[" Post-procesamiento"]
-        O --> P["Filtros Dietéticos"]
-        P --> Q["Motor de Sustituciones"]
-        Q --> R["Resultados Finales"]
+        O --> P["Filtros dietéticos"]
+        P --> Q["Motor de dustituciones"]
+        Q --> R["Resultados finales"]
     end
 
     subgraph UI[" Interfaz"]
@@ -60,7 +60,7 @@ flowchart TB
     style UI fill:#f5f5f5
 ```
 
-## Pipeline de Procesamiento
+## Pipeline de procesamiento
 ```mermaid
 sequenceDiagram
     participant U as Usuario
@@ -81,7 +81,7 @@ sequenceDiagram
     App-->>U: Mostrar resultados
 ```
 
-##  Estructura del Proyecto
+##  Estructura del proyecto
 ```
 CEIA-VIT/
 ├── app/                              # Interfaz Streamlit
@@ -174,7 +174,7 @@ DATABRICKS_USER=tu.email@dominio.com
 EOF
 ```
 
-##  Pipeline de Datos
+##  Pipeline de datos
 
 ### 1. Preprocesamiento
 ```bash
@@ -184,7 +184,7 @@ python src/data/preprocessing.py
 - Genera texto enriquecido para embeddings
 - Registra métricas en MLflow
 
-### 2. Crear Embeddings (Sentence-Transformers)
+### 2. Crear embeddings (Sentence-Transformers)
 ```bash
 python src/models/embeddings.py
 ```
@@ -192,7 +192,7 @@ python src/models/embeddings.py
 - Genera embeddings de 384 dimensiones
 - ~20 segundos en GPU RTX 5090
 
-### 3. Crear Embeddings CLIP (Multimodal)
+### 3. Crear embeddings CLIP (Multimodal)
 ```bash
 python src/models/clip_embeddings.py
 ```
@@ -202,20 +202,20 @@ python src/models/clip_embeddings.py
 
 ##  Uso
 
-### Lanzar la Aplicación Web
+### Abrir la aplicación Web
 ```bash
 streamlit run app/streamlit_app.py
 ```
 
 La app se abrirá en `http://localhost:8501` con tres modos de búsqueda:
 
-1. ** Búsqueda por Imagen**: Sube una foto de un plato
-2. ** Búsqueda por Texto**: Describe lo que buscas
-3. ** Búsqueda por Ingredientes**: Lista ingredientes disponibles
+1. ** Búsqueda por imagen**: sube una foto de un plato
+2. ** Búsqueda por texto**: describe lo que buscas
+3. ** Búsqueda por ingredientes**: lista ingredientes disponibles
 
-##  Resultados de Evaluación
+##  Resultados de evaluación
 
-### Comparación de Modelos de Texto vs Multimodal
+### Comparación de modelos de texto vs multimodal
 
 | Métrica | MiniLM-L6 | CLIP-ViT-B32 | Ganador |
 |---------|-----------|--------------|---------|
@@ -227,7 +227,7 @@ La app se abrirá en `http://localhost:8501` con tres modos de búsqueda:
 | **Avg Similarity@5** | 0.720 | **0.844** | CLIP |
 | **Latencia** | 17.3ms | **14.6ms** | CLIP |
 
-### Comparación de Modelos de Visión
+### Comparación de modelos de visión
 
 | Modelo | Dimensión | Accuracy@5 | Velocidad (recetas/s) | Latencia |
 |--------|-----------|------------|----------------------|----------|
@@ -237,7 +237,7 @@ La app se abrirá en `http://localhost:8501` con tres modos de búsqueda:
 ### Hallazgos Clave
 
 1. **CLIP gana en general**: Mejor accuracy@5, matching de ingredientes, scores de confianza más altos, Y más rápido
-2. **MiniLM mejor en relevancia de nombres**: Mejor para hacer coincidir palabras de la query directamente con nombres de recetas
+2. **MiniLM es mejor en relevancia de nombres**: Mejor para hacer coincidir palabras de la query directamente con nombres de recetas
 3. **CLIP-ViT-B/32 vs L/14**: El modelo más pequeño (B/32) sorprendentemente supera al más grande en este dominio
 4. **Ambos son rápidos**: Búsqueda sub-20ms sobre 231K recetas
 
@@ -255,22 +255,23 @@ Pass Rate: 60% (3/5)
 
 ##  Ejecutar Evaluaciones
 ```bash
-# Tests de negativos difíciles
+
+# Tests de hard negatives
 python src/evaluation/hard_negatives.py
 python src/evaluation/hard_negatives.py --clip
 
 # Comparación MiniLM vs CLIP
 python src/evaluation/model_comparison.py
 
-# Comparación de modelos de visión (CLIP variantes)
+# Comparación de modelos de visión (variantes de CLIP)
 python src/evaluation/vision_model_comparison.py --max-recipes 50000
 ```
 
-##  Visualizaciones Generadas
+##  Visualizaciones generadas
 
 El sistema genera automáticamente las siguientes visualizaciones:
 
-### Comparación de Modelos
+### Comparación de modelos
 - `accuracy_at_k_comparison.png` - Gráfico de barras Accuracy@K
 - `ingredient_match_comparison.png` - Coincidencia de ingredientes
 - `similarity_distribution.png` - Distribución de scores de similaridad
@@ -278,22 +279,22 @@ El sistema genera automáticamente las siguientes visualizaciones:
 - `radar_comparison.png` - Gráfico radar multidimensional
 - `summary_table.png` - Tabla resumen
 
-### Comparación de Visión
+### Comparación de visión
 - `vision_accuracy_at_k.png` - Accuracy por modelo de visión
 - `vision_embedding_speed.png` - Velocidad de embedding
 - `vision_model_characteristics.png` - Características de modelos
 - `vision_summary_table.png` - Tabla resumen de visión
 
-##  Stack Tecnológico
+##  Stack tecnológico
 
 | Categoría | Tecnología |
 |-----------|------------|
-| **Embeddings de Texto** | Sentence-Transformers (MiniLM-L6-v2) |
-| **Embeddings Multimodales** | CLIP (ViT-B/32, ViT-L/14) |
-| **Búsqueda Vectorial** | FAISS (Facebook AI Similarity Search) |
-| **Interfaz Web** | Streamlit |
+| **Embeddings de texto** | Sentence-Transformers (MiniLM-L6-v2) |
+| **Embeddings multimodales** | CLIP (ViT-B/32, ViT-L/14) |
+| **Búsqueda vectorial** | FAISS (Facebook AI Similarity Search) |
+| **Interfaz web** | Streamlit |
 | **MLOps** | MLflow + Databricks |
-| **Procesamiento de Datos** | pandas, NumPy |
+| **Procesamiento de datos** | pandas, NumPy |
 | **Deep Learning** | PyTorch (con soporte CUDA/MPS/CPU) |
 
 ##  MLflow/Databricks
@@ -304,7 +305,7 @@ El pipeline registra automáticamente:
 - Resultados de evaluación (precision, recall, contamination rate)
 - Artefactos (gráficos de comparación)
 
-Ver experimentos localmente:
+Para ver experimentos localmente, ejecutar:
 ```bash
 mlflow ui
 # Abre http://localhost:5000
@@ -313,15 +314,18 @@ mlflow ui
 O en Databricks (si está configurado):
 - Los experimentos aparecen en **Machine Learning → Experiments**
 
-##  Trabajo Futuro
 
-### Mejoras Planificadas
+##  Trabajo futuro
+
+### Mejoras posibles
+
 - **Sustituciones con LLM**: Usar Ollama/Groq para sustituciones contextuales en lugar de reglas estáticas
-- **Dataset Recipe1M+**: Integrar cuando esté disponible para búsqueda imagen→receta real
-- **Fine-tuning**: Ajustar CLIP en pares imagen-receta específicos
-- **Feedback de Usuario**: Sistema de rating para mejorar el ranking
+- **Dataset [Recipe1M+](https://im2recipe.csail.mit.edu)**: integrar cuando esté disponible para búsqueda imagen→receta real
+- **Fine-tuning**: ajustar CLIP en pares imagen-receta específicos
+- **Feedback de usuario**: Sistema de rating para mejorar el ranking
 
-### Extensiones Posibles
+### Extensiones posibles
+
 - API REST con FastAPI
 - Caché de embeddings con Redis
 - Sistema de recomendación personalizado
@@ -334,9 +338,10 @@ O en Databricks (si está configurado):
 - Ingredientes, pasos, tags, metadatos nutricionales
 - [Descargar aquí](https://www.kaggle.com/datasets/shuyangli94/food-com-recipes-and-user-interactions)
 
+
 ##  Contexto Académico
 
-Proyecto desarrollado para **CEIA (Especialización en Inteligencia Artificial)** - Universidad de Buenos Aires
+Proyecto desarrollado para las maestrías **MCB (Maestría en Computación de Borde) y MIA (Maestría en Inteligencia Artificial)** - Universidad de Buenos Aires
 
 **Materia**: Visión por Computadora III
 
@@ -349,7 +354,6 @@ Proyecto desarrollado para **CEIA (Especialización en Inteligencia Artificial)*
 - Carina Roldan
 
 ##  Licencia
-
 Este proyecto es con fines educativos.
 
 ---
