@@ -14,7 +14,7 @@ Sistema de búsqueda de recetas que combina procesamiento de lenguaje natural y 
 ##  Arquitectura del sistema
 ```mermaid
 flowchart TB
-    subgraph DATOS[" Preparación de Datos"]
+    subgraph DATOS[" Preparación de datos"]
         A[("Food.com Dataset 231K recetas")] --> B["<div style='text-align:left;'>• Preprocesamiento<br>• Limpieza<br>• Parsing de ingredientes<br>• Generación de texto</div>"]
         B --> C[("recipes.parquet<br>Datos procesados")]
     end
@@ -358,4 +358,4 @@ Este proyecto es con fines educativos.
 
 ---
 
-** Tip para evaluadores**: Todos los comandos funcionan sin configuración adicional excepto las credenciales de Databricks (opcional). El sistema usa embeddings pre-calculados y puede ejecutarse completamente en modo local.
+** Tip para la ejecución**: Todos los comandos funcionan sin configuración adicional excepto las credenciales de Databricks (opcional). El sistema usa embeddings pre-calculados y puede ejecutarse completamente en modo local.
