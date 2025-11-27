@@ -209,4 +209,5 @@ __marimo__/
 
 data/embeddings/
 data/processed/
-data/raw/
+/data/raw/food-com/*.csv
+.DS_Store
