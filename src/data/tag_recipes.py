@@ -1,7 +1,7 @@
+# Lee archivo de recetas, enriquece el etiquetado y deja los resultados en un nuevo archivo
+
 import pandas as pd
-import matplotlib.pyplot as plt
 import ast
-import pickle
 from pathlib import Path
 
 # carne
