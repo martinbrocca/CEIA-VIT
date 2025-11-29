@@ -13,3 +13,4 @@ kaggle
 mlflow
 pillow
 tqdm
+wordcloud
