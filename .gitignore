@@ -210,5 +210,6 @@ __marimo__/
 data/embeddings/
 data/processed/
 /data/raw/food-com/*.csv
+/data/raw/food-101/
 .DS_Store
 mlruns/
