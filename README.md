@@ -1276,9 +1276,9 @@ SSD: 100GB
 
 **Probado en:**
 ```
-GPU: NVIDIA RTX 5090 (24GB VRAM)
-CPU: AMD Ryzen / Intel i7+
-RAM: 64GB
+GPU: NVIDIA RTX 5090 (32GB VRAM)
+CPU: AMD Ryzen 
+RAM: 96 GB
 OS: Ubuntu 24.04
 CUDA: 12.1
 ```
