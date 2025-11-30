@@ -188,7 +188,7 @@ class VisionModelComparator:
         return results
     
     def search_image(self, image: Image.Image, model, processor, model_type: str, index: faiss.IndexFlatIP, top_k: int = 10) -> pd.DataFrame:
-        """Search recipes by image query - THIS IS THE NEW METHOD!"""
+        """Search recipes by image query"""
         import torch
         
         with torch.no_grad():
@@ -203,7 +203,8 @@ class VisionModelComparator:
                     images=image,
                     return_tensors="pt"
                 ).to(self.device)
-                query_embedding = model.get_vision_features(**inputs)
+                # FIX: Use get_image_features for SigLIP too
+                query_embedding = model.get_image_features(**inputs)  # ← Changed from get_vision_features
             
             query_embedding = query_embedding / query_embedding.norm(dim=-1, keepdim=True)
             query_embedding = query_embedding.cpu().numpy()
