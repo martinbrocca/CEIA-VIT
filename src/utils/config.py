@@ -17,7 +17,9 @@ EMBEDDINGS_DIR = DATA_DIR / "embeddings"
 # Food.com specific paths
 FOODCOM_RAW_DIR = RAW_DATA_DIR / "food-com"
 FOODCOM_RAW_RECIPES = FOODCOM_RAW_DIR / "RAW_recipes.csv"
-PROCESSED_RECIPES = PROCESSED_DATA_DIR / "recipes.parquet"
+PROCESSED_RECIPES_ORIG = PROCESSED_DATA_DIR / "recipes.parquet"
+PROCESSED_RECIPES = PROJECT_ROOT / "data" / "processed" / "recipes_corrected.parquet"  # Fixed tags with Carina's script
+
 
 # Embeddings paths
 RECIPE_EMBEDDINGS = EMBEDDINGS_DIR / "recipe_embeddings.npy"

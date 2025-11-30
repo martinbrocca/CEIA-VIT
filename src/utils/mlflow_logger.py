@@ -1,4 +1,5 @@
 # src/utils/mlflow_logger.py
+"""Helper class for MLflow experiment tracking, supporting both Databricks and local setups."""
 import mlflow
 import time
 from pathlib import Path

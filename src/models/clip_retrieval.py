@@ -1,4 +1,121 @@
 # src/models/clip_retrieval.py
+"""
+CLIP Recipe Retrieval System (Image & Text Search)
+
+Purpose:
+    Multimodal recipe search using CLIP embeddings. Enables searching recipes
+    by uploading food images OR text queries. Both modalities use the same
+    embedding space for consistent results.
+    
+    Primary use case: Image-to-recipe search
+    For pure text search, retrieval.py is faster
+
+Usage:
+    # Interactive testing
+    python src/models/clip_retrieval.py
+    
+    # Programmatic usage
+    from models.clip_retrieval import CLIPRecipeRetriever
+    retriever = CLIPRecipeRetriever()
+    retriever.load()
+    
+    # Image search
+    from PIL import Image
+    img = Image.open("food.jpg")
+    results = retriever.search_by_image(img, top_k=10)
+    
+    # Text search
+    results = retriever.search("chocolate cake", top_k=10)
+
+Features:
+    - Image-to-recipe search using CLIP vision encoder
+    - Text-to-recipe search using CLIP text encoder
+    - Dietary filtering support
+    - Shared embedding space for consistent multimodal results
+
+Search Methods:
+    1. search_by_image(image, top_k, dietary_filters)
+        - Input: PIL Image of food
+        - Encodes image with CLIP vision encoder
+        - Returns semantically similar recipes
+    
+    2. search(query, top_k, dietary_filters)
+        - Input: Text query (max 77 tokens)
+        - Encodes text with CLIP text encoder
+        - Same functionality as retrieval.py but using CLIP
+
+Model Architecture:
+    CLIP-ViT-B/32:
+        - Vision encoder: ViT-B/32 (512-dim)
+        - Text encoder: Transformer (512-dim)
+        - Shared embedding space
+        - Image size: 224x224 (auto-resized)
+
+Performance:
+    - Image query time: ~15-25ms (GPU)
+    - Text query time: ~5-10ms (GPU)
+    - Index: FAISS IndexFlatIP
+    - 231,637 recipes searchable
+
+Image Search Quality:
+    - Average similarity: 0.318 for relevant matches
+    - Works best with clear food photos
+    - Handles various angles and presentations
+    - Lower similarity than text (expected for cross-modal)
+
+Dietary Filtering:
+    - Same as retrieval.py
+    - Retrieves top_k * 10, then filters
+    - Preserves semantic ranking
+
+Example Usage:
+    # Load retriever
+    retriever = CLIPRecipeRetriever()
+    retriever.load()
+    
+    # Search by image
+    img = Image.open("chocolate_cake.jpg")
+    results = retriever.search_by_image(img, top_k=5)
+    print(results[['name', 'similarity_score']])
+    
+    # Output:
+    # name                        similarity_score
+    # Chocolate Fudge Cake        0.342
+    # Dark Chocolate Cake         0.328
+    # Chocolate Layer Cake        0.315
+    # Chocolate Cupcakes          0.298
+    # Chocolate Brownies          0.285
+    
+    # Search by text (using CLIP)
+    results = retriever.search("chocolate cake", top_k=5)
+    # Higher similarity scores for text queries (0.7-0.9 range)
+
+When to Use:
+    - Use search_by_image() for visual recipe discovery
+    - Use search() for text queries when you need CLIP features
+    - Use retrieval.py for faster pure text search
+
+Output Format:
+    DataFrame with columns:
+        - id, name, minutes, tags_parsed, ingredients_parsed
+        - n_ingredients, steps, description, recipe_text
+        - similarity_score (0.0 to 1.0)
+
+Technical Details:
+    - Embeddings: L2 normalized for cosine similarity
+    - Image preprocessing: Resize → Normalize → Tensor
+    - Text preprocessing: Tokenize (max 77) → Pad → Tensor
+    - FAISS index: IndexFlatIP (exact search)
+
+Limitations:
+    - Text limited to 77 tokens (vs 512 for sentence-transformers)
+    - Image search quality depends on photo clarity
+    - Lower absolute similarity scores than text-to-text search
+
+Author: Martin Brocca
+Created: 2025-11-29
+"""
+
 import sys
 from pathlib import Path
 import numpy as np

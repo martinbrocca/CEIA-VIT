@@ -1,4 +1,39 @@
 # src/evaluation/model_comparison.py
+"""
+MiniLM vs CLIP Model Comparison
+
+Purpose:
+    Compares text-only (sentence-transformers/all-MiniLM-L6-v2) vs multimodal (CLIP) 
+    models for recipe search on 20 evaluation queries.
+    
+    Metrics evaluated:
+    - Accuracy@K (K=1,3,5,10)
+    - Ingredient match score
+    - Name relevance score
+    - Similarity scores
+    - Search latency
+
+Usage:
+    python src/evaluation/model_comparison.py
+
+Output:
+    - experiments/comparison_charts/accuracy_at_k_comparison.png
+    - experiments/comparison_charts/ingredient_match_comparison.png
+    - experiments/comparison_charts/similarity_distribution.png
+    - experiments/comparison_charts/search_time_comparison.png
+    - experiments/comparison_charts/radar_comparison.png
+    - experiments/comparison_charts/summary_table.png
+
+Results:
+    CLIP wins overall:
+    - Accuracy@5: 90% vs 75%
+    - Ingredient match: 85% vs 80%
+    - Search speed: 14.6ms vs 17.3ms
+
+Author: Martin Brocca
+Created: 2025-11-28
+"""
+
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))

@@ -1,4 +1,145 @@
 # src/models/multimodal_embeddings.py
+"""
+Multimodal Embedding Factory (CLIP, SigLIP, BLIP)
+
+Purpose:
+    Unified interface for creating embeddings with different vision-language models.
+    Supports multiple model families (CLIP, SigLIP, BLIP) with consistent API.
+    
+    Used by vision_model_comparison.py for benchmarking different models.
+    Production systems typically use a single model (CLIP recommended).
+
+Supported Models:
+    1. CLIP-ViT-B/32 (RECOMMENDED)
+        - Model: openai/clip-vit-base-patch32
+        - Dimension: 512
+        - Speed: Fast (4785 recipes/sec)
+        - Quality: Best (90% text acc, 31.8% image sim)
+    
+    2. CLIP-ViT-L/14
+        - Model: openai/clip-vit-large-patch14
+        - Dimension: 768
+        - Speed: Slower (1420 recipes/sec)
+        - Quality: Similar to base (88% text acc, 29.5% image sim)
+    
+    3. SigLIP-Base
+        - Model: google/siglip-base-patch16-224
+        - Dimension: 768
+        - Speed: Moderate
+        - Quality: Poor without fine-tuning (7.5% image sim)
+        - Note: Needs fine-tuning for food domain
+    
+    4. BLIP-Base
+        - Model: Salesforce/blip-itm-base-coco
+        - Dimension: 256
+        - Speed: Moderate
+        - Quality: Experimental
+
+Usage:
+    from models.multimodal_embeddings import MultimodalModelFactory
+    
+    # Get a model
+    model = MultimodalModelFactory.get_model("clip-vit-base-32")
+    
+    # Encode text
+    texts = ["chocolate cake", "pasta carbonara"]
+    embeddings = model.encode_text(texts, batch_size=32)
+    
+    # Encode image
+    from PIL import Image
+    img = Image.open("food.jpg")
+    embedding = model.encode_image(img)
+
+Model Wrappers:
+    CLIPWrapper:
+        - Uses CLIPModel and CLIPProcessor
+        - Text: get_text_features (max 77 tokens)
+        - Image: get_image_features (224x224)
+        - L2 normalized embeddings
+    
+    SigLIPWrapper:
+        - Uses AutoModel and AutoProcessor
+        - Text: get_text_features (max 64 tokens)
+        - Image: get_image_features (224x224)
+        - L2 normalized embeddings
+    
+    BLIPWrapper:
+        - Uses BlipForImageTextRetrieval
+        - Text: Uses text_encoder with dummy image
+        - Image: Uses vision_model pooler_output
+        - L2 normalized embeddings
+        - Note: BLIP ITM expects paired inputs
+
+Architecture:
+    MultimodalModelFactory
+    ├── get_model(model_key) → Returns wrapper
+    ├── SUPPORTED_MODELS dict
+    └── Model-specific wrappers
+        ├── CLIPWrapper
+        ├── SigLIPWrapper
+        └── BLIPWrapper
+
+Common Interface:
+    Each wrapper implements:
+        - encode_text(texts, batch_size) → np.ndarray
+        - encode_image(image) → np.ndarray
+        - L2 normalization for cosine similarity
+        - GPU support with automatic device detection
+
+Batch Processing:
+    Text encoding:
+        - Processes in batches for memory efficiency
+        - Default batch_size=32
+        - Progress bar with tqdm
+        - Automatic padding and truncation
+    
+    Image encoding:
+        - Single image at a time
+        - Auto-resize to model's expected size
+        - Returns (1, dim) numpy array
+
+Example - Compare Multiple Models:
+    models_to_test = ["clip-vit-base-32", "clip-vit-large-14", "siglip-base"]
+    
+    for model_key in models_to_test:
+        model = MultimodalModelFactory.get_model(model_key)
+        
+        # Encode recipes
+        embeddings = model.encode_text(recipe_texts, batch_size=64)
+        
+        # Test with image
+        img = Image.open("test.jpg")
+        img_emb = model.encode_image(img)
+
+Performance Comparison (10K recipes):
+    Model                Speed (rec/sec)    Text Acc@5    Image Sim@5
+    CLIP-ViT-B/32       4785               0.900         0.318
+    CLIP-ViT-L/14       1420               0.880         0.295
+    SigLIP-Base         2341               0.720         0.075
+    BLIP-Base           1156               Experimental
+
+Technical Details:
+    - All embeddings L2 normalized
+    - GPU memory: 3-8 GB depending on model
+    - Supports mixed precision inference
+    - Thread-safe for batch processing
+
+When to Use:
+    - Use this factory for model comparison/benchmarking
+    - For production, use clip_embeddings.py directly with chosen model
+    - SigLIP requires fine-tuning before production use
+    - BLIP is experimental for recipe domain
+
+Dependencies:
+    - transformers
+    - torch
+    - PIL
+    - numpy
+
+Author: Martin Brocca
+Created: 2025-11-29
+"""
+
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))

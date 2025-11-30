@@ -1,0 +1,64 @@
+{
+  "baseline": {
+    "summary": {
+      "avg_search_time_ms": 8.602420488993326,
+      "accuracy_at_1": 0.54,
+      "similarity_at_1": 0.09698408097028732,
+      "accuracy_at_3": 0.7866666666666666,
+      "similarity_at_3": 0.09224802255630493,
+      "accuracy_at_5": 0.8333333333333334,
+      "similarity_at_5": 0.0894603505730629,
+      "accuracy_at_10": 0.9066666666666666,
+      "similarity_at_10": 0.08500006049871445,
+      "per_category_accuracy": {
+        "apple_pie": 0.6,
+        "caesar_salad": 0.9,
+        "cheesecake": 0.9,
+        "chocolate_cake": 0.6,
+        "grilled_salmon": 0.7,
+        "hamburger": 1.0,
+        "ice_cream": 0.8,
+        "pizza": 1.0,
+        "sushi": 0.8,
+        "tacos": 0.9,
+        "pancakes": 0.9,
+        "spaghetti_carbonara": 0.7,
+        "chicken_wings": 0.9,
+        "donuts": 0.8,
+        "french_fries": 1.0
+      }
+    },
+    "model_name": "Baseline SigLIP"
+  },
+  "finetuned": {
+    "summary": {
+      "avg_search_time_ms": 8.085783322652182,
+      "accuracy_at_1": 0.6933333333333334,
+      "similarity_at_1": 0.12712283432483673,
+      "accuracy_at_3": 0.8666666666666667,
+      "similarity_at_3": 0.1256786286830902,
+      "accuracy_at_5": 0.8933333333333333,
+      "similarity_at_5": 0.12482454627752304,
+      "accuracy_at_10": 0.9266666666666666,
+      "similarity_at_10": 0.12355108559131622,
+      "per_category_accuracy": {
+        "apple_pie": 0.6,
+        "caesar_salad": 1.0,
+        "cheesecake": 0.8,
+        "chocolate_cake": 0.8,
+        "grilled_salmon": 0.8,
+        "hamburger": 1.0,
+        "ice_cream": 0.8,
+        "pizza": 1.0,
+        "sushi": 1.0,
+        "tacos": 1.0,
+        "pancakes": 0.9,
+        "spaghetti_carbonara": 0.9,
+        "chicken_wings": 1.0,
+        "donuts": 0.9,
+        "french_fries": 0.9
+      }
+    },
+    "model_name": "Fine-tuned SigLIP"
+  }
+}

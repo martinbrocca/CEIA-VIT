@@ -76,9 +76,14 @@ class VisionModelComparator:
             "model_id": "openai/clip-vit-large-patch14",
         },
         {
-            "name": "SigLIP-Base",
+            "name": "SigLIP-Base (v1)",
             "type": "siglip",
             "model_id": "google/siglip-base-patch16-224",
+        },
+        {
+            "name": "SigLIP-SO400M (v2)",  # NEW!
+            "type": "siglip",
+            "model_id": "google/siglip-so400m-patch14-384",
         },
     ]
     
