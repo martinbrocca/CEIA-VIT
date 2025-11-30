@@ -213,3 +213,4 @@ data/processed/
 /data/raw/food-101/
 .DS_Store
 mlruns/
+cache/*
