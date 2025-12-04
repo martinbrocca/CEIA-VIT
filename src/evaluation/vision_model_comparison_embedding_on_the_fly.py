@@ -1,45 +1,27 @@
 """
-Vision Model Comparison (CLIP variants + SigLIP) - WITH CACHING
+Vision Model Comparison (CLIP variants + SigLIP)
 
 Purpose:
-    Compares different vision-language models for text and image-to-recipe search.
-    
-    OPTIMIZATION: Loads pre-computed embeddings from .npy files if available,
-    otherwise generates on-the-fly. This makes evaluation 20-120x faster on
-    machines without powerful GPUs.
-
-Models Evaluated:
+    Compares different vision-language models for text and image-to-recipe search:
     - CLIP-ViT-B/32 (512 dim)
     - CLIP-ViT-L/14 (768 dim)
     - SigLIP-Base (768 dim)
-    - SigLIP-SO400M (1152 dim)
+    
+    Evaluates both text queries and image queries (if --image-folder provided).
 
 Usage:
-    # With pre-computed embeddings (FAST - recommended for team)
+    # Text evaluation only
     python src/evaluation/vision_model_comparison.py --max-recipes 10000
-    # → Loads .npy instantly if available
-    
-    # Force regeneration (ignore cached files)
-    python src/evaluation/vision_model_comparison.py --max-recipes 10000 --no-cache
     
     # With image evaluation
     python src/evaluation/vision_model_comparison.py \
         --max-recipes 10000 \
         --image-folder data/raw/food-demo
 
-Pre-computed Embeddings:
-    Generate once with: python src/models/generate_all_vision_embeddings.py
-    
-    Files expected in data/embeddings/:
-    - clip_base_embeddings.npy         (475 MB)
-    - clip_large_embeddings.npy        (713 MB)
-    - siglip_base_embeddings.npy       (713 MB)
-    - siglip_so400m_embeddings.npy     (1,069 MB)
-    
-    Benefits:
-    - WITHOUT cache: ~22 seconds to generate all embeddings
-    - WITH cache: <1 second to load all embeddings
-    - Speedup: 20-120x faster
+Output:
+    - experiments/vision_comparison/text_vs_vision_performance.png
+    - experiments/vision_comparison/text_accuracy_at_k.png
+    - experiments/vision_comparison/embedding_speed.png
 
 Results:
     Winner: CLIP-ViT-B/32
@@ -51,7 +33,6 @@ Results:
 
 Author: Martin Brocca
 Created: 2025-11-29
-Updated: 2025-11-30 (added embedding caching)
 """
 
 import sys
@@ -100,30 +81,20 @@ class VisionModelComparator:
             "model_id": "google/siglip-base-patch16-224",
         },
         {
-            "name": "SigLIP-SO400M (v2)",
+            "name": "SigLIP-SO400M (v2)",  # NEW!
             "type": "siglip",
             "model_id": "google/siglip-so400m-patch14-384",
         },
     ]
     
-    # Mapping of model IDs to embedding files
-    EMBEDDING_FILES = {
-        "openai/clip-vit-base-patch32": "clip_recipe_embeddings.npy",
-        "openai/clip-vit-large-patch14": "clip_large_embeddings.npy",
-        "google/siglip-base-patch16-224": "siglip_base_embeddings.npy",
-        "google/siglip-so400m-patch14-384": "siglip_so400m_embeddings.npy"
-    }
-    
-    def __init__(self, max_recipes: int = 10000, image_folder: Optional[str] = None, use_cache: bool = True):
+    def __init__(self, max_recipes: int = 10000, image_folder: Optional[str] = None):
         """
         Args:
             max_recipes: Limit recipes for faster comparison (use 10K for testing)
             image_folder: Path to folder containing food images for vision evaluation
-            use_cache: Whether to use cached embeddings if available
         """
         self.max_recipes = max_recipes
         self.image_folder = Path(image_folder) if image_folder else None
-        self.use_cache = use_cache
         self.device = get_device()
         self.recipes_df = None
         self.results = {}
@@ -191,58 +162,8 @@ class VisionModelComparator:
         
         return model, processor
     
-    def try_load_cached_embeddings(self, model_id: str) -> Optional[np.ndarray]:
-        """
-        Try to load pre-computed embeddings from .npy file
-        
-        Returns:
-            embeddings if successful, None otherwise
-        """
-        if not self.use_cache:
-            return None
-        
-        # Get embedding filename for this model
-        embedding_file = self.EMBEDDING_FILES.get(model_id)
-        if not embedding_file:
-            return None
-        
-        embedding_path = EMBEDDINGS_DIR / embedding_file
-        
-        if not embedding_path.exists():
-            return None
-        
-        try:
-            print(f"  → Loading cached embeddings from {embedding_file}...")
-            embeddings = np.load(embedding_path)
-            
-            # Verify size matches current recipes
-            if len(embeddings) != len(self.recipes_df):
-                print(f"     Warning: Cached embeddings size mismatch")
-                print(f"     Cached: {len(embeddings)}, Current: {len(self.recipes_df)}")
-                print(f"     Falling back to on-the-fly generation...")
-                return None
-            
-            print(f"  ✓ Loaded {len(embeddings)} cached embeddings (dimension: {embeddings.shape[1]})")
-            return embeddings
-            
-        except Exception as e:
-            print(f"     Error loading cache: {e}")
-            print(f"     Falling back to on-the-fly generation...")
-            return None
-    
-    def create_embeddings(self, model, processor, model_type: str, model_id: str, batch_size: int = 64) -> np.ndarray:
-        """
-        Create recipe text embeddings with a given model
-        
-        First tries to load from cached .npy file, otherwise generates on-the-fly
-        """
-        # Try to load from cache
-        cached_embeddings = self.try_load_cached_embeddings(model_id)
-        if cached_embeddings is not None:
-            return cached_embeddings
-        
-        # Cache miss or disabled - generate on-the-fly
-        print(f"  → Generating embeddings on-the-fly...")
+    def create_embeddings(self, model, processor, model_type: str, batch_size: int = 64) -> np.ndarray:
+        """Create recipe text embeddings with a given model"""
         recipe_texts = self.recipes_df['recipe_text'].tolist()
         all_embeddings = []
         
@@ -281,288 +202,299 @@ class VisionModelComparator:
         index.add(embeddings.astype('float32'))
         return index
     
-    def evaluate_model(self, model_config: Dict):
+    def search_text(self, query: str, model, processor, model_type: str, index: faiss.IndexFlatIP, top_k: int = 10) -> pd.DataFrame:
+        """Search recipes by text query"""
+        import torch
+        
+        with torch.no_grad():
+            if model_type == "clip":
+                inputs = processor(
+                    text=[query],
+                    return_tensors="pt",
+                    padding=True,
+                    truncation=True,
+                    max_length=77
+                ).to(self.device)
+                query_embedding = model.get_text_features(**inputs)
+            elif model_type == "siglip":
+                inputs = processor(
+                    text=[query],
+                    return_tensors="pt",
+                    padding="max_length",
+                    truncation=True,
+                    max_length=64
+                ).to(self.device)
+                query_embedding = model.get_text_features(**inputs)
+            
+            query_embedding = query_embedding / query_embedding.norm(dim=-1, keepdim=True)
+            query_embedding = query_embedding.cpu().numpy()
+        
+        distances, indices = index.search(query_embedding.astype('float32'), top_k)
+        
+        results = self.recipes_df.iloc[indices[0]].copy()
+        results['similarity_score'] = distances[0]
+        
+        return results
+    
+    def search_image(self, image: Image.Image, model, processor, model_type: str, index: faiss.IndexFlatIP, top_k: int = 10) -> pd.DataFrame:
+        """Search recipes by image"""
+        import torch
+        
+        with torch.no_grad():
+            if model_type == "clip":
+                inputs = processor(
+                    images=image,
+                    return_tensors="pt"
+                ).to(self.device)
+                image_embedding = model.get_image_features(**inputs)
+            elif model_type == "siglip":
+                inputs = processor(
+                    images=image,
+                    return_tensors="pt"
+                ).to(self.device)
+                image_embedding = model.get_image_features(**inputs)
+            
+            image_embedding = image_embedding / image_embedding.norm(dim=-1, keepdim=True)
+            image_embedding = image_embedding.cpu().numpy()
+        
+        distances, indices = index.search(image_embedding.astype('float32'), top_k)
+        
+        results = self.recipes_df.iloc[indices[0]].copy()
+        results['similarity_score'] = distances[0]
+        
+        return results
+    
+    def create_evaluation_queries(self) -> List[Dict]:
+        """Create test queries"""
+        return [
+            {"query": "chocolate cake", "expected": ["chocolate", "cake"]},
+            {"query": "pasta carbonara", "expected": ["pasta", "egg", "bacon"]},
+            {"query": "chicken soup", "expected": ["chicken", "broth"]},
+            {"query": "vegetable stir fry", "expected": ["vegetable", "soy"]},
+            {"query": "banana bread", "expected": ["banana", "flour"]},
+            {"query": "grilled salmon", "expected": ["salmon"]},
+            {"query": "caesar salad", "expected": ["lettuce", "parmesan"]},
+            {"query": "mushroom risotto", "expected": ["mushroom", "rice"]},
+            {"query": "apple pie", "expected": ["apple", "cinnamon"]},
+            {"query": "beef tacos", "expected": ["beef", "tortilla"]},
+        ]
+    
+    def evaluate_model(self, model_config: Dict, k_values: List[int] = [1, 3, 5, 10]) -> Dict:
         """Evaluate a single model"""
         model_name = model_config["name"]
         model_type = model_config["type"]
-        model_id = model_config["model_id"]
         
         print(f"\n{'='*60}")
         print(f"Evaluating: {model_name}")
-        print(f"{'='*60}\n")
+        print(f"{'='*60}")
         
         # Load model
         print("Loading model...")
-        start_time = time.time()
+        start_load = time.time()
         model, processor = self.load_model(model_config)
-        load_time = time.time() - start_time
-        print(f"✓ Model loaded in {load_time:.2f}s")
+        load_time = time.time() - start_load
+        print(f"Model loaded in {load_time:.2f}s")
         
-        # Create embeddings (cached or on-the-fly)
+        # Create embeddings
         print("Creating embeddings...")
-        start_time = time.time()
-        embeddings = self.create_embeddings(model, processor, model_type, model_id)
-        embedding_time = time.time() - start_time
-        recipes_per_sec = len(self.recipes_df) / embedding_time if embedding_time > 0 else 0
-        print(f"Embeddings created in {embedding_time:.2f}s ({recipes_per_sec:.0f} recipes/sec)")
+        start_embed = time.time()
+        embeddings = self.create_embeddings(model, processor, model_type)
+        embed_time = time.time() - start_embed
+        print(f"Embeddings created in {embed_time:.2f}s ({len(self.recipes_df)/embed_time:.0f} recipes/sec)")
         print(f"Embedding dimension: {embeddings.shape[1]}")
         
         # Build index
         print("Building index...")
         index = self.build_index(embeddings)
         
-        # Text evaluation queries
-        text_queries = [
-            "chocolate cake", "spaghetti carbonara", "grilled salmon",
-            "caesar salad", "chicken tikka masala", "apple pie",
-            "pad thai", "margherita pizza", "beef tacos", "greek yogurt"
-        ]
-        
-        print(f"\nRunning {len(text_queries)} text evaluation queries...")
-        text_results = self.evaluate_text_queries(
-            text_queries, model, processor, model_type, index
-        )
-        
-        # Image evaluation (if images provided)
-        image_results = {}
-        if self.test_images:
-            print(f"\nRunning {len(self.test_images)} image evaluation queries...")
-            image_results = self.evaluate_image_queries(
-                self.test_images, model, processor, index
-            )
-        
-        # Store results
-        self.results[model_name] = {
-            "model_id": model_id,
+        # Initialize results
+        results = {
+            "model_name": model_name,
             "model_type": model_type,
             "embedding_dim": embeddings.shape[1],
-            "load_time": load_time,
-            "embedding_time": embedding_time,
-            "recipes_per_second": recipes_per_sec,
-            "text_results": text_results,
-            "image_results": image_results,
-            "summary": self.compute_summary(text_results, image_results)
+            "load_time_s": load_time,
+            "embed_time_s": embed_time,
+            "recipes_per_second": len(self.recipes_df) / embed_time,
+            "accuracy_at_k": {k: [] for k in k_values},
+            "similarity_at_k": {k: [] for k in k_values},
+            "search_times": [],
         }
         
-        # Clean up GPU memory
-        import torch
-        del model, processor, embeddings, index
-        torch.cuda.empty_cache() if torch.cuda.is_available() else None
-    
-    def evaluate_text_queries(self, queries: List[str], model, processor, model_type: str, index) -> List[Dict]:
-        """Evaluate text queries"""
-        import torch
+        # TEXT EVALUATION
+        queries = self.create_evaluation_queries()
+        print(f"\nRunning {len(queries)} text evaluation queries...")
         
-        results = []
-        for query in tqdm(queries, desc="Text queries"):
-            start_time = time.time()
+        for query_data in tqdm(queries, desc="Text queries"):
+            query = query_data["query"]
+            expected = query_data["expected"]
             
-            with torch.no_grad():
-                if model_type == "clip":
-                    inputs = processor(
-                        text=[query],
-                        return_tensors="pt",
-                        padding=True,
-                        truncation=True,
-                        max_length=77
-                    ).to(self.device)
-                    query_emb = model.get_text_features(**inputs)
-                elif model_type == "siglip":
-                    inputs = processor(
-                        text=[query],
-                        return_tensors="pt",
-                        padding="max_length",
-                        truncation=True,
-                        max_length=64
-                    ).to(self.device)
-                    query_emb = model.get_text_features(**inputs)
+            start_search = time.time()
+            search_results = self.search_text(query, model, processor, model_type, index, top_k=max(k_values))
+            search_time = (time.time() - start_search) * 1000
+            
+            results["search_times"].append(search_time)
+            
+            for k in k_values:
+                top_k_results = search_results.head(k)
                 
-                query_emb = query_emb / query_emb.norm(dim=-1, keepdim=True)
-                query_emb = query_emb.cpu().numpy()
-            
-            # Search
-            distances, indices = index.search(query_emb.astype('float32'), 10)
-            search_time = time.time() - start_time
-            
-            # Check if expected terms are in results
-            expected_terms = query.lower().split()
-            top_recipes = self.recipes_df.iloc[indices[0]]
-            
-            hits_at_k = {}
-            for k in [1, 3, 5, 10]:
-                top_k = top_recipes.head(k)
-                hits = any(
-                    any(term in recipe['name'].lower() for term in expected_terms)
-                    for _, recipe in top_k.iterrows()
-                )
-                hits_at_k[k] = hits
-            
-            results.append({
-                "query": query,
-                "hits_at_k": hits_at_k,
-                "top_5_similarities": distances[0][:5].tolist(),
-                "search_time_ms": search_time * 1000
-            })
+                # Check if expected ingredients found
+                hits = 0
+                for _, row in top_k_results.iterrows():
+                    ingredients_str = ' '.join(row['ingredients_parsed']).lower()
+                    name_str = row['name'].lower()
+                    combined = ingredients_str + ' ' + name_str
+                    
+                    if any(exp.lower() in combined for exp in expected):
+                        hits += 1
+                
+                accuracy = hits / k if k > 0 else 0
+                avg_sim = top_k_results['similarity_score'].mean()
+                
+                results["accuracy_at_k"][k].append(accuracy)
+                results["similarity_at_k"][k].append(avg_sim)
         
-        return results
-    
-    def evaluate_image_queries(self, test_images: List[Dict], model, processor, index) -> List[Dict]:
-        """Evaluate image queries"""
-        import torch
-        
-        results = []
-        for img_data in tqdm(test_images, desc="Image queries"):
-            start_time = time.time()
+        # IMAGE EVALUATION
+        if self.test_images:
+            print(f"\nRunning {len(self.test_images)} image evaluation queries...")
             
-            with torch.no_grad():
-                inputs = processor(images=img_data['image'], return_tensors="pt").to(self.device)
-                query_emb = model.get_image_features(**inputs)
-                query_emb = query_emb / query_emb.norm(dim=-1, keepdim=True)
-                query_emb = query_emb.cpu().numpy()
+            results["image_similarity_at_k"] = {k: [] for k in k_values}
+            results["image_search_times"] = []
             
-            # Search
-            distances, indices = index.search(query_emb.astype('float32'), 10)
-            search_time = time.time() - start_time
-            
-            results.append({
-                "image_name": img_data['name'],
-                "top_5_similarities": distances[0][:5].tolist(),
-                "search_time_ms": search_time * 1000
-            })
+            for img_data in tqdm(self.test_images, desc="Image queries"):
+                image = img_data['image']
+                
+                start_search = time.time()
+                search_results = self.search_image(image, model, processor, model_type, index, top_k=max(k_values))
+                search_time = (time.time() - start_search) * 1000
+                
+                results["image_search_times"].append(search_time)
+                
+                for k in k_values:
+                    top_k_results = search_results.head(k)
+                    avg_sim = top_k_results['similarity_score'].mean()
+                    results["image_similarity_at_k"][k].append(avg_sim)
         
-        return results
-    
-    def compute_summary(self, text_results: List[Dict], image_results: Dict) -> Dict:
-        """Compute summary statistics"""
-        # Text metrics
-        accuracy_at_k = {}
-        for k in [1, 3, 5, 10]:
-            hits = sum(1 for r in text_results if r["hits_at_k"][k])
-            accuracy_at_k[f"accuracy_at_{k}"] = hits / len(text_results)
-        
-        avg_similarity = np.mean([
-            np.mean(r["top_5_similarities"]) 
-            for r in text_results
-        ])
-        
-        avg_search_time = np.mean([r["search_time_ms"] for r in text_results])
-        
-        summary = {
-            **accuracy_at_k,
-            "similarity_at_5": avg_similarity,
-            "avg_search_time_ms": avg_search_time
+        # Aggregate text results
+        results["summary"] = {
+            "avg_search_time_ms": np.mean(results["search_times"]),
         }
         
-        # Image metrics (if available)
-        if image_results:
-            avg_image_sim = np.mean([
-                np.mean(r["top_5_similarities"]) 
-                for r in image_results
-            ])
-            avg_image_time = np.mean([r["search_time_ms"] for r in image_results])
-            
-            summary.update({
-                "image_similarity_at_5": avg_image_sim,
-                "avg_image_search_time_ms": avg_image_time
-            })
-        else:
-            summary.update({
-                "image_similarity_at_5": 0.0,
-                "avg_image_search_time_ms": 0.0
-            })
+        for k in k_values:
+            results["summary"][f"accuracy_at_{k}"] = np.mean(results["accuracy_at_k"][k])
+            results["summary"][f"similarity_at_{k}"] = np.mean(results["similarity_at_k"][k])
         
-        return summary
+        # Aggregate image results if available
+        if self.test_images:
+            results["summary"]["avg_image_search_time_ms"] = np.mean(results["image_search_times"])
+            for k in k_values:
+                results["summary"][f"image_similarity_at_{k}"] = np.mean(results["image_similarity_at_k"][k])
+        
+        # Cleanup GPU memory
+        del model, processor, embeddings, index
+        import torch
+        torch.cuda.empty_cache()
+        
+        return results
     
     def run_comparison(self):
-        """Run comparison across all models"""
+        """Run full comparison"""
         self.load_recipes()
         self.load_test_images()
         
         for model_config in self.MODELS_TO_COMPARE:
             try:
-                self.evaluate_model(model_config)
+                self.results[model_config["name"]] = self.evaluate_model(model_config)
             except Exception as e:
                 print(f"Error evaluating {model_config['name']}: {e}")
                 import traceback
                 traceback.print_exc()
-    
-    def generate_charts(self):
-        """Generate comparison charts"""
-        if not self.results:
-            print("No results to visualize")
-            return
+                continue
         
-        output_dir = PROJECT_ROOT / "experiments" / "vision_comparison"
+        return self.results
+    
+    def generate_charts(self, output_dir: Path = None):
+        """Generate comparison charts"""
+        if output_dir is None:
+            output_dir = PROJECT_ROOT / "experiments" / "vision_comparison"
+        
         output_dir.mkdir(parents=True, exist_ok=True)
         
         model_names = list(self.results.keys())
-        
-        # [Rest of the chart generation code remains the same as original...]
-        # Copying from lines 415-629 of original file
-        
-        # 1. Text Accuracy@K
-        fig, ax = plt.subplots(figsize=(10, 6))
-        
-        x = np.arange(4)
-        width = 0.2
         k_values = [1, 3, 5, 10]
         
-        for i, model_name in enumerate(model_names):
-            accuracies = [
-                self.results[model_name]["summary"][f"accuracy_at_{k}"]
-                for k in k_values
-            ]
-            ax.bar(x + i*width, accuracies, width, label=model_name)
+        # 1. Text Accuracy@K Comparison
+        fig, ax = plt.subplots(figsize=(12, 6))
         
-        ax.set_ylabel('Accuracy', fontsize=12)
-        ax.set_title('Text Query Accuracy@K', fontsize=14, fontweight='bold')
-        ax.set_xticks(x + width * 1.5)
+        x = np.arange(len(k_values))
+        width = 0.25
+        
+        for i, model_name in enumerate(model_names):
+            accuracies = [self.results[model_name]["summary"][f"accuracy_at_{k}"] for k in k_values]
+            offset = width * (i - len(model_names)/2 + 0.5)
+            bars = ax.bar(x + offset, accuracies, width, label=model_name)
+            
+            for bar, acc in zip(bars, accuracies):
+                ax.annotate(f'{acc:.2f}',
+                           xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                           xytext=(0, 3),
+                           textcoords="offset points",
+                           ha='center', va='bottom', fontsize=8)
+        
+        ax.set_xlabel('K (Top-K Results)', fontsize=12)
+        ax.set_ylabel('Accuracy@K', fontsize=12)
+        ax.set_title('Vision-Language Models: Text Accuracy@K Comparison', fontsize=14, fontweight='bold')
+        ax.set_xticks(x)
         ax.set_xticklabels([f'@{k}' for k in k_values])
         ax.legend()
-        ax.grid(axis='y', alpha=0.3)
+        ax.set_ylim(0, 1.1)
         
         plt.tight_layout()
         plt.savefig(output_dir / "vision_text_accuracy_at_k.png", dpi=150)
         plt.close()
         print(f"✓ Saved: vision_text_accuracy_at_k.png")
         
-        # 2. Image Similarity (if available)
+        # 2. Image Similarity@K Comparison (if images were evaluated)
         if self.test_images:
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = plt.subplots(figsize=(12, 6))
             
-            image_sims = [self.results[m]["summary"]["image_similarity_at_5"] for m in model_names]
-            colors = plt.cm.viridis(np.linspace(0.2, 0.8, len(model_names)))
+            x = np.arange(len(k_values))
+            width = 0.25
             
-            bars = ax.bar(model_names, image_sims, color=colors)
+            for i, model_name in enumerate(model_names):
+                similarities = [self.results[model_name]["summary"][f"image_similarity_at_{k}"] for k in k_values]
+                offset = width * (i - len(model_names)/2 + 0.5)
+                bars = ax.bar(x + offset, similarities, width, label=model_name)
+                
+                for bar, sim in zip(bars, similarities):
+                    ax.annotate(f'{sim:.3f}',
+                               xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                               xytext=(0, 3),
+                               textcoords="offset points",
+                               ha='center', va='bottom', fontsize=8)
             
-            for bar, sim in zip(bars, image_sims):
-                ax.annotate(f'{sim:.3f}',
-                           xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
-                           xytext=(0, 3),
-                           textcoords="offset points",
-                           ha='center', va='bottom', fontsize=10, fontweight='bold')
-            
-            ax.set_ylabel('Average Similarity@5', fontsize=12)
-            ax.set_title('Image Query Performance', fontsize=14, fontweight='bold')
-            plt.xticks(rotation=15)
+            ax.set_xlabel('K (Top-K Results)', fontsize=12)
+            ax.set_ylabel('Average Similarity Score', fontsize=12)
+            ax.set_title('Vision-Language Models: Image Similarity@K Comparison', fontsize=14, fontweight='bold')
+            ax.set_xticks(x)
+            ax.set_xticklabels([f'@{k}' for k in k_values])
+            ax.legend()
             
             plt.tight_layout()
             plt.savefig(output_dir / "vision_image_similarity_at_k.png", dpi=150)
             plt.close()
             print(f"✓ Saved: vision_image_similarity_at_k.png")
         
-        # 3. Combined Text vs Image (if images available)
+        # 3. Text vs Image Performance Comparison
         if self.test_images:
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
             
+            # Text Similarity@5
+            text_sims = [self.results[m]["summary"]["similarity_at_5"] for m in model_names]
             colors = plt.cm.viridis(np.linspace(0.2, 0.8, len(model_names)))
             
-            # Text Accuracy@5
-            text_accs = [self.results[m]["summary"]["accuracy_at_5"] for m in model_names]
-            
-            bars1 = ax1.bar(model_names, text_accs, color=colors)
-            for bar, acc in zip(bars1, text_accs):
-                ax1.annotate(f'{acc:.3f}',
+            bars1 = ax1.bar(model_names, text_sims, color=colors)
+            for bar, sim in zip(bars1, text_sims):
+                ax1.annotate(f'{sim:.3f}',
                            xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
                            xytext=(0, 3),
                            textcoords="offset points",
@@ -727,11 +659,10 @@ def log_to_mlflow(comparator: VisionModelComparator, chart_dir: Path):
         mlflow.log_param("num_recipes", comparator.max_recipes)
         mlflow.log_param("num_test_images", len(comparator.test_images))
         mlflow.log_param("image_evaluation", bool(comparator.test_images))
-        mlflow.log_param("use_cache", comparator.use_cache)
         
         for model_name, results in comparator.results.items():
             s = results["summary"]
-            prefix = model_name.replace("/", "_").replace("-", "_").replace(" ", "_")
+            prefix = model_name.replace("/", "_").replace("-", "_")
             
             mlflow.log_metric(f"{prefix}_text_accuracy_at_5", s["accuracy_at_5"])
             mlflow.log_metric(f"{prefix}_text_similarity_at_5", s["similarity_at_5"])
@@ -747,7 +678,6 @@ def log_to_mlflow(comparator: VisionModelComparator, chart_dir: Path):
             mlflow.log_artifact(str(chart_file), "vision_charts")
         
         mlflow.set_tag("eval_type", "vision_model_comparison")
-        mlflow.set_tag("cached_embeddings", comparator.use_cache)
         
         print("✓ Logged to MLflow")
 
@@ -758,15 +688,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--max-recipes", type=int, default=10000, help="Max recipes for testing")
     parser.add_argument("--image-folder", type=str, help="Path to folder with food images for vision evaluation")
-    parser.add_argument("--no-cache", action="store_true", help="Force regeneration, ignore cached embeddings")
     parser.add_argument("--no-mlflow", action="store_true")
     
     args = parser.parse_args()
     
     comparator = VisionModelComparator(
         max_recipes=args.max_recipes,
-        image_folder=args.image_folder,
-        use_cache=not args.no_cache
+        image_folder=args.image_folder
     )
     comparator.run_comparison()
     comparator.print_summary()
