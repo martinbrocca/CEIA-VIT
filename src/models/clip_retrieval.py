@@ -111,9 +111,6 @@ Limitations:
     - Text limited to 77 tokens (vs 512 for sentence-transformers)
     - Image search quality depends on photo clarity
     - Lower absolute similarity scores than text-to-text search
-
-Author: Martin Brocca
-Created: 2025-11-29
 """
 
 import sys

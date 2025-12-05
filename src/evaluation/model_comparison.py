@@ -29,9 +29,6 @@ Results:
     - Accuracy@5: 90% vs 75%
     - Ingredient match: 85% vs 80%
     - Search speed: 14.6ms vs 17.3ms
-
-Author: Martin Brocca
-Created: 2025-11-28
 """
 
 import sys

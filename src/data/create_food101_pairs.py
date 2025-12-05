@@ -25,9 +25,6 @@ Dataset Statistics:
     - 86 food categories
     - 8,600 unique images
     - 80.2% average quality score (BLIP verified)
-
-Author: Martin Brocca
-Created: 2025-11-29
 """
 
 

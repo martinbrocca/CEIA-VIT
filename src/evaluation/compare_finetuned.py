@@ -39,9 +39,6 @@ Output:
 Expected Results:
     - Accuracy@5: Baseline ~12% → Fine-tuned ~25-35%
     - 2-3x improvement in top-5 retrieval accuracy
-
-Author: Martin Brocca
-Created: 2025-11-29
 """
 
 import sys

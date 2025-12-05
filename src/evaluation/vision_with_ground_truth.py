@@ -146,9 +146,6 @@ When to Use:
     - Use vision_model_comparison.py for quick benchmarks
     - Ground truth provides more reliable metrics
     - Essential for model selection and fine-tuning
-
-Author: Martin Brocca
-Created: 2025-11-29
 """
 
 import sys

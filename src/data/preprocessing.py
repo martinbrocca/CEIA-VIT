@@ -45,9 +45,6 @@ Performance:
     - Processes ~231K recipes in ~15 seconds
     - Output size: ~45 MB parquet file
     - 15,000+ recipes/second parsing rate
-
-Author: Martin Brocca
-Created: 2025-11-29
 """
 import pandas as pd
 import ast

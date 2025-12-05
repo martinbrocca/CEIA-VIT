@@ -40,8 +40,6 @@ Output:
     - models/siglip-food-finetuned/ (fine-tuned model)
     - MLflow run with all metrics and artifacts
 
-Author: Martin Brocca
-Created: 2025-11-29
 """
 import sys
 from pathlib import Path

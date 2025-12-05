@@ -21,9 +21,6 @@ Method:
     3. Handle qualifiers (vegetable, veggie, vegetarian)
     4. Validate against original tags
     5. Update tags if confidence > 0.9
-
-Author: Carina Roldan
-Created: 2025-11-30 (based on EDA findings)
 """
 
 import sys

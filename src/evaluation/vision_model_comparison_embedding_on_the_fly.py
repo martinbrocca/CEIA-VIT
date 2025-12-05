@@ -30,9 +30,6 @@ Results:
     - Fastest (4785 recipes/sec)
     
     SigLIP performed poorly (0.075 similarity) - needs fine-tuning
-
-Author: Martin Brocca
-Created: 2025-11-29
 """
 
 import sys

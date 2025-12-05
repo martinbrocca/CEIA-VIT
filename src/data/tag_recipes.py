@@ -143,7 +143,8 @@ def to_list(x):
 if __name__ == "__main__":
     
     # Path a los datos
-    data_path = Path("../../data/raw/food-com")
+    #data_path = Path("../../data/raw/food-com")
+    data_path = Path("data/raw/food-com")
     
     
     recetas_raw = f'{data_path}/RAW_recipes.csv'

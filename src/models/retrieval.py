@@ -100,9 +100,6 @@ Dependencies:
     - sentence-transformers
     - faiss-gpu (or faiss-cpu)
     - pandas, numpy
-
-Author: Martin Brocca
-Created: 2025-11-29
 """
 
 

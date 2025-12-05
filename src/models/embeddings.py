@@ -71,9 +71,6 @@ Example Output:
     Time taken: 48.32 seconds (4794 recipes/sec)
     Embedding file size: 22.7 MB
     ✓ Done!
-
-Author: Martin Brocca
-Created: 2025-11-29
 """
 
 import sys

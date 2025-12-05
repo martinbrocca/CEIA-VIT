@@ -24,9 +24,6 @@ Metrics:
 Results:
     Both MiniLM and CLIP: 60% pass rate (3/5 tests)
     Failures due to inconsistent Food.com dietary tags, not model quality
-
-Author: Martin Brocca
-Created: 2025-11-28
 """
 
 import sys

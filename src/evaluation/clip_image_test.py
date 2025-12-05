@@ -17,8 +17,7 @@ import mlflow
 
 class CLIPImageHardNegativeEvaluator:
     """
-    Evaluate CLIP's ability to distinguish between visually similar foods
-    Similar to your VIT project - testing confusing pairs like spinach/chard
+    Evaluate CLIP's ability to distinguish between visually similar foods - testing confusing pairs like spinach/chard
     """
     
     def __init__(self):
@@ -102,21 +101,15 @@ class CLIPImageHardNegativeEvaluator:
     def simulate_image_query(self, food_name: str, top_k: int = 10) -> pd.DataFrame:
         """
         Simulate an image query by using text description
-        In practice, you'd use actual food images here
-        
-        For real testing, you could:
-        1. Download images from URLs
-        2. Use a test dataset like Food-101
-        3. Have users upload their own test images
         """
-        # For now, simulate with text query
+     
         # This tests if recipe text embeddings can distinguish the foods
         results = self.retriever.search_by_image(
             self._create_dummy_image(),  # Placeholder
             top_k=top_k
         )
         
-        # In reality, you'd:
+        # With real images:
         # image = self._download_image(food_image_url)
         # results = self.retriever.search_by_image(image, top_k=top_k)
         

@@ -85,8 +85,6 @@ When to Use:
     - Use regular embeddings (embeddings.py) for pure text search
     - Can use both simultaneously for hybrid search
 
-Author: Martin Brocca
-Created: 2025-11-29
 """
 
 import sys

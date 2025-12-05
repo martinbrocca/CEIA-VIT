@@ -45,11 +45,6 @@ Benefits:
     - vision_model_comparison.py becomes 20-120x faster
     - Consistent embeddings across team
     - Share via Git LFS or cloud storage
-
-
-
-Author: Martin Brocca
-Created: 2025-11-30
 """
 
 import sys

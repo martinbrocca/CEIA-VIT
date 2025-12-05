@@ -135,9 +135,6 @@ Dependencies:
     - torch
     - PIL
     - numpy
-
-Author: Martin Brocca
-Created: 2025-11-29
 """
 
 import sys
