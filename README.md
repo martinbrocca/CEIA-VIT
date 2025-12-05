@@ -45,38 +45,6 @@ Este proyecto implementa un sistema de búsqueda multimodal de recetas que combi
 
 ---
 
-## Resumen de Resultados
-
-### Rendimiento de Modelos
-
-| Modelo | Text Acc@5 | Image Sim@5 | Velocidad (recetas/seg) | Mejor Para |
-|-------|-----------|-------------|-------------------------|------------|
-| **CLIP-ViT-B/32** | 94% | 0.318 | 4,692 | **Producción** |
-| CLIP-ViT-L/14 | 86% | 0.258 | 2,479 | Gran escala |
-| SigLIP Baseline | 98% | 0.075 | 2,191 | Solo texto |
-| SigLIP Fine-tuned | 89% | 0.125 | 2,174 | **Dominio comida** |
-| MiniLM-L6 | 85% | N/A | 9,164 | Solo texto |
-
-### Impacto del Fine-tuning
-
-**SigLIP Fine-tuned en Food-101-Recipe-Pairs:**
-
-- Entrenamiento: 21,729 pares imagen-texto, 5 épocas
-- **Accuracy@1**: 54.0% → **69.3%** (+15.3%)
-- **Similitud**: 0.089 → 0.125 (+39%)
-- Tiempo de entrenamiento: 2.8 minutos en RTX 5090
-
-### Mejoras en Calidad de Datos
-
-**Correcciones de Etiquetas Dietéticas:**
-
-- **109,246 etiquetas corregidas** (47.2% del dataset)
-- Precisión vegetariano: 65% → **94%**
-- Precisión vegano: 58% → **86%**
-- Método: Clasificación basada en ingredientes con manejo de calificadores
-
----
-
 ## Arquitectura del Sistema
 
 ```mermaid
@@ -253,18 +221,21 @@ streamlit run app/streamlit_app.py
 ```
 CEIA-VIT/
 ├── data/
-│   ├── raw/                          # Datasets crudos
-│   │   ├── food-com/                # Recetas Food.com
-│   │   └── food-101/                # Imágenes Food-101
-│   ├── processed/                    # Datasets procesados
-│   │   ├── recipes_corrected.parquet    # Etiquetas dietéticas corregidas
-│   │   └── food101_recipe_pairs.json    # Dataset para fine-tuning
-│   └── embeddings/                   # Embeddings pre-computados
+│   ├── raw/                             # Datasets crudos
+│   │   ├── food-com/                    # Recetas Food.com
+│   │   └── food-101/                    # Imágenes Food-101
+│   ├── processed/                       # Datasets procesados
+│   │   ├── recipes.parquet              # new
+│   │   ├── recipes_corrected.parquet    NO *** # Etiquetas dietéticas corregidas
+│   │   └── food101_recipe_pairs.json    NO *** # Dataset para fine-tuning
+│   └── embeddings/                      # Embeddings pre-computados
 │       ├── recipe_embeddings.npy        # MiniLM (384 dim)
-│       └── clip_recipe_embeddings.npy   # CLIP (512 dim)
+│       ├── recipe_ids.npy               # new
+│       └── clip_recipe_embeddings.npy   NO # CLIP (512 dim) *****
 │
 ├── src/
 │   ├── data/
+│   │   ├── tag_recipes.py           # new
 │   │   ├── preprocessing.py         # Preprocesamiento del dataset
 │   │   ├── dietary_tagger.py        # Corrección etiquetas dietéticas
 │   │   └── create_food101_pairs.py  # Creación del dataset
@@ -272,35 +243,50 @@ CEIA-VIT/
 │   ├── models/
 │   │   ├── embeddings.py            # Embeddings MiniLM
 │   │   ├── clip_embeddings.py       # Embeddings CLIP
-│   │   └── retrieval.py             # Recuperación basada en FAISS
+│   │   ├── retrieval.py             # Recuperación basada en FAISS
+│   │   ├── generate_all_vision_embeddings.py #
+│   │   ├── multimodal_embeddings.py # new
+│   │   └── clip_retrieval.py        # new
 │   │
 │   ├── training/
 │   │   └── finetune_siglip.py       # Fine-tuning de SigLIP
 │   │
 │   ├── evaluation/
+│   │   ├── clip_image_test.py
+│   │   ├── clip_image_tests.py
 │   │   ├── model_comparison.py      # MiniLM vs CLIP
-│   │   ├── vision_model_comparison.py  # Modelos de visión
+│   │   ├── vision_model_comparison.py # Modelos de visión
+│   │   ├── vision_with_ground_truth.py # new
+│   │   ├── vision_model_comparison_embedding_on_the_fly.py
 │   │   ├── compare_finetuned.py     # Baseline vs fine-tuned
 │   │   └── hard_negatives.py        # Casos de prueba desafiantes
 │   │
 │   └── utils/
 │       ├── config.py                # Configuración
 │       ├── device.py                # Detección GPU/CPU
-│       └── mlflow_utils.py          # Integración MLflow
+│       ├── mlflow_utils.py         *** # Integración MLflow
+│       ├── count_files_in_dir.py    # new
+│       └── mlflow_logger.py         # new
 │
 ├── app/
 │   ├── streamlit_app.py             # App principal de búsqueda
+│   ├── strings_es.py                # new
 │   └── streamlit_app_compare.py     # App de comparación de modelos
 │
 ├── notebooks/
-│   ├── 01_EDA.ipynb                 # Análisis exploratorio de datos
-│   ├── 02_Models_compare.ipynb      # Comparación de modelos
-│   └── 03_Dataset_Analysis.ipynb    # Análisis Food-101 pairs
+│   ├── 01_data_exploration.ipynb    # Análisis exploratorio de datos
+│   ├── 02_Models_Compare.ipynb      # Comparación de modelos
+│   ├── 03_vision_model_comparison   # new
+│   └── 03_Dataset_Analysis.ipynb    NO *** # Análisis Food-101 pairs
 │
 ├── experiments/                      # Resultados y gráficos
-│   ├── comparison_charts/           # Gráficos comparación modelos
-│   ├── vision_comparison/           # Gráficos modelos visión
-│   └── finetuning_comparison/       # Gráficos fine-tuning
+│   ├── comparison_charts/            # Gráficos comparación modelos
+│   ├── vision_comparison/            # Gráficos modelos visión
+│   ├── finetuning_comparison/        # Gráficos fine-tuning
+│   ├── hard_negatives_comparison.png # new
+│   └── model_comparison_results.json # new
+│
+├── mlruns/                           # new
 │
 ├── models/
 │   └── siglip-food-finetuned/       # Modelo fine-tuneado
