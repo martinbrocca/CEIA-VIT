@@ -219,17 +219,11 @@ streamlit run app/streamlit_app.py
 ```
 CEIA-VIT/
 ├── data/
-│   ├── raw/                             # Datasets crudos
-│   │   ├── food-com/                    # Recetas Food.com
-│   │   └── food-101/                    # Imágenes Food-101
-│   ├── processed/                       # Datasets procesados
-│   │   ├── recipes.parquet              # new
-│   │   ├── recipes_corrected.parquet    NO *** # Etiquetas dietéticas corregidas
-│   │   └── food101_recipe_pairs.json    NO *** # Dataset para fine-tuning
-│   └── embeddings/                      # Embeddings pre-computados
-│       ├── recipe_embeddings.npy        # MiniLM (384 dim)
-│       ├── recipe_ids.npy               # new
-│       └── clip_recipe_embeddings.npy   NO # CLIP (512 dim) *****
+│   ├── raw/                         # Datasets crudos
+│   │   ├── food-com/                # Recetas Food.com
+│   │   └── food-101/                # Imágenes Food-101
+│   ├── processed/                   # Datasets procesados (generados)
+│   └── embeddings/                  # Embeddings pre-computados (generados)
 │
 ├── src/
 │   ├── data/
@@ -262,26 +256,23 @@ CEIA-VIT/
 │   └── utils/
 │       ├── config.py                # Configuración
 │       ├── device.py                # Detección GPU/CPU
-│       ├── mlflow_utils.py         *** # Integración MLflow
 │       ├── count_files_in_dir.py    # contador de archivos
 │       └── mlflow_logger.py         # clase aux. para trackear experimentos de MLflow
 │
 ├── app/
 │   ├── streamlit_app.py             # App principal de búsqueda
-│   ├── strings_es.py                # new
+│   ├── strings_es.py                # Traducciones del UI al español
 │   └── streamlit_app_compare.py     # App de comparación de modelos
 │
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb    # Análisis exploratorio de datos
 │   ├── 02_Models_Compare.ipynb      # Comparación de modelos (texto)
-│   └── 03_vision_model_comparison.ipynb   # Comparación de modelos (imágenes)
+│   └── 03_vision_model_comparison.ipynb # Comparación de modelos (imágenes)
 │
 ├── experiments/                     # Resultados y gráficos
 │   ├── comparison_charts/           # Gráficos comparación modelos
 │   ├── vision_comparison/           # Gráficos modelos visión
 │   └── finetuning_comparison/       # Gráficos fine-tuning
-│
-├── mlruns/                          # new
 │
 ├── models/
 │   └── siglip-food-finetuned/       # Modelo fine-tuneado
