@@ -10,6 +10,7 @@ FIUBA - CEIA
 
 ## Tabla de Contenidos
 
+- [Informe del proyecto](#informe-del-proyecto)
 - [Descripción General](#descripción-general)
 - [Arquitectura del Sistema](#arquitectura-del-sistema)
 - [Inicio Rápido](#inicio-rápido)
@@ -17,6 +18,12 @@ FIUBA - CEIA
 - [Uso Detallado](#uso-detallado)
 - [Aplicaciones Interactivas](#aplicaciones-interactivas)
 - [Contacto](#contacto)
+
+---
+
+## Informe del proyecto
+
+Los detalles de diseño e implementación del sistema están documentados en el siguiente [informe](docs/Informe_TP_VPC3-Roldán-Brocca-Garmendia.pdf).
 
 ---
 
@@ -225,6 +232,7 @@ CEIA-VIT/
 │   ├── processed/                   # Datasets procesados (generados)
 │   └── embeddings/                  # Embeddings pre-computados (generados)
 │
+├── docs/                            # Informe del proyecto
 ├── src/
 │   ├── data/
 │   │   ├── tag_recipes.py           # enriquecedor de etiquetas
