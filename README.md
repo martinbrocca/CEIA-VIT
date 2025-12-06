@@ -273,9 +273,8 @@ CEIA-VIT/
 │
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb    # Análisis exploratorio de datos
-│   ├── 02_Models_Compare.ipynb      # Comparación de modelos
-│   ├── 03_vision_model_comparison   # new
-│   └── 03_Dataset_Analysis.ipynb    NO *** # Análisis Food-101 pairs
+│   ├── 02_Models_Compare.ipynb      # Comparación de modelos (texto)
+│   └── 03_vision_model_comparison.ipynb   # Comparación de modelos (imágenes)
 │
 ├── experiments/                     # Resultados y gráficos
 │   ├── comparison_charts/           # Gráficos comparación modelos
