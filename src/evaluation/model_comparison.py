@@ -365,28 +365,33 @@ class MultiModelEvaluator:
         # 5. Radar Chart
         fig, ax = plt.subplots(figsize=(10, 8), subplot_kw=dict(polar=True))
         categories = ['Accuracy@5', 'Ingredient\nMatch@5', 'Name\nRelevance@5', 
-                     'Similarity\nScore', 'Speed\n(normalized)']
-        
+             'Similarity\nScore', 'Speed\n(queries/sec)']
+
+        # Calcular throughput máximo para normalización
+        max_throughput = max(1000 / r["summary"]["avg_search_time_ms"] for r in self.results.values())
+
         for model_name in model_names:
             summary = self.results[model_name]["summary"]
-            max_time = max(r["summary"]["avg_search_time_ms"] for r in self.results.values())
-            speed_norm = 1 - (summary["avg_search_time_ms"] / max_time)
-            
+    
+           # Usar throughput (queries por segundo) en vez de latencia invertida
+            throughput = 1000 / summary["avg_search_time_ms"]
+            speed_norm = throughput / max_throughput
+    
             values = [
                 summary["accuracy_at_5"],
                 summary["ingredient_match_at_5"],
                 summary["name_relevance_at_5"],
                 summary["avg_similarity_at_5"],
-                speed_norm
+                speed_norm  # Ahora correctamente normalizado
             ]
             values += values[:1]
-            
+    
             angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
             angles += angles[:1]
-            
+    
             ax.plot(angles, values, 'o-', linewidth=2, label=model_name)
             ax.fill(angles, values, alpha=0.25)
-        
+
         ax.set_xticks(np.linspace(0, 2 * np.pi, len(categories), endpoint=False))
         ax.set_xticklabels(categories, fontsize=10)
         ax.set_title('Multi-Dimensional Model Comparison', fontsize=14, fontweight='bold', y=1.08)
@@ -394,8 +399,7 @@ class MultiModelEvaluator:
         plt.tight_layout()
         plt.savefig(output_dir / "radar_comparison.png", dpi=150, bbox_inches='tight')
         plt.close()
-        print(f"✓ Saved: radar_comparison.png")
-        
+        print(f"✓ Saved: radar_comparison.png") 
         # 6. Summary Table Image
         fig, ax = plt.subplots(figsize=(12, 4))
         ax.axis('off')
