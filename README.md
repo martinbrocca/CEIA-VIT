@@ -2,7 +2,7 @@
 
 Sistema de búsqueda de recetas multimodal usando embeddings CLIP y transformers para la materia Visión por Computadora III - CEIA, Universidad de Buenos Aires.
 
-**Autores:** : Martin Brocca / María Carina Roldan / Ariadna Garmendia
+**Autores:** : Martin Brocca / María Carina Roldán / Ariadna Garmendia
 FIUBA - CEIA  
 **Año:** 2025
 
@@ -11,14 +11,12 @@ FIUBA - CEIA
 ## Tabla de Contenidos
 
 - [Descripción General](#descripción-general)
-- [Resumen de Resultados](#resumen-de-resultados)
 - [Arquitectura del Sistema](#arquitectura-del-sistema)
 - [Inicio Rápido](#inicio-rápido)
 - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Uso Detallado](#uso-detallado)
 - [Aplicaciones Interactivas](#aplicaciones-interactivas)
-- [Experimentos](#experimentos)
-- [Resultados](#resultados)
+- [Contacto](#contacto)
 
 ---
 
@@ -235,7 +233,7 @@ CEIA-VIT/
 │
 ├── src/
 │   ├── data/
-│   │   ├── tag_recipes.py           # new
+│   │   ├── tag_recipes.py           # enriquecedor de etiquetas
 │   │   ├── preprocessing.py         # Preprocesamiento del dataset
 │   │   ├── dietary_tagger.py        # Corrección etiquetas dietéticas
 │   │   └── create_food101_pairs.py  # Creación del dataset
@@ -244,9 +242,9 @@ CEIA-VIT/
 │   │   ├── embeddings.py            # Embeddings MiniLM
 │   │   ├── clip_embeddings.py       # Embeddings CLIP
 │   │   ├── retrieval.py             # Recuperación basada en FAISS
-│   │   ├── generate_all_vision_embeddings.py #
-│   │   ├── multimodal_embeddings.py # new
-│   │   └── clip_retrieval.py        # new
+│   │   ├── generate_all_vision_embeddings.py # pre-generador de embeddings
+│   │   ├── multimodal_embeddings.py # Multimodal Embedding Factory (CLIP, SigLIP, BLIP)
+│   │   └── clip_retrieval.py        # Sistema de recuperación de recetas con CLIP
 │   │
 │   ├── training/
 │   │   └── finetune_siglip.py       # Fine-tuning de SigLIP
@@ -256,7 +254,7 @@ CEIA-VIT/
 │   │   ├── clip_image_tests.py
 │   │   ├── model_comparison.py      # MiniLM vs CLIP
 │   │   ├── vision_model_comparison.py # Modelos de visión
-│   │   ├── vision_with_ground_truth.py # new
+│   │   ├── vision_with_ground_truth.py # Evaluación de modelos de visión con datasets de referencia
 │   │   ├── vision_model_comparison_embedding_on_the_fly.py
 │   │   ├── compare_finetuned.py     # Baseline vs fine-tuned
 │   │   └── hard_negatives.py        # Casos de prueba desafiantes
@@ -265,8 +263,8 @@ CEIA-VIT/
 │       ├── config.py                # Configuración
 │       ├── device.py                # Detección GPU/CPU
 │       ├── mlflow_utils.py         *** # Integración MLflow
-│       ├── count_files_in_dir.py    # new
-│       └── mlflow_logger.py         # new
+│       ├── count_files_in_dir.py    # contador de archivos
+│       └── mlflow_logger.py         # clase aux. para trackear experimentos de MLflow
 │
 ├── app/
 │   ├── streamlit_app.py             # App principal de búsqueda
@@ -279,20 +277,18 @@ CEIA-VIT/
 │   ├── 03_vision_model_comparison   # new
 │   └── 03_Dataset_Analysis.ipynb    NO *** # Análisis Food-101 pairs
 │
-├── experiments/                      # Resultados y gráficos
-│   ├── comparison_charts/            # Gráficos comparación modelos
-│   ├── vision_comparison/            # Gráficos modelos visión
-│   ├── finetuning_comparison/        # Gráficos fine-tuning
-│   ├── hard_negatives_comparison.png # new
-│   └── model_comparison_results.json # new
+├── experiments/                     # Resultados y gráficos
+│   ├── comparison_charts/           # Gráficos comparación modelos
+│   ├── vision_comparison/           # Gráficos modelos visión
+│   └── finetuning_comparison/       # Gráficos fine-tuning
 │
-├── mlruns/                           # new
+├── mlruns/                          # new
 │
 ├── models/
 │   └── siglip-food-finetuned/       # Modelo fine-tuneado
 │
 └── cache/
-    └── indices/                      # Caché FAISS (auto-generado)
+    └── indices/                     # Caché FAISS (auto-generado)
 ```
 
 ---
